@@ -101,14 +101,18 @@ export default function OrderPage() {
   const [pickerQty, setPickerQty] = useState("1");
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  const [name, setName] = useState("");
+    const [qtyBySku, setQtyBySku] = useState<Record<string, string>>({});
+const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
-  const filtered = useMemo(() => {
+  
+  const [quickAddQty, setQuickAddQty] = useState<number>(1);
+  const [selectedSku, setSelectedSku] = useState<string>("");
+const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return PRODUCTS;
     return PRODUCTS.filter((p) =>
@@ -232,7 +236,7 @@ export default function OrderPage() {
       <Section title="Available Products">
         {/*
           Mobile fix: these controls must stack on small screens.
-          Inline grid columns can cause the <select> to collapse/clip on mobile.
+          Inline grid columns can cause the <select value={selectedSku} onChange={(e) => setSelectedSku(e.target.value)}> to collapse/clip on mobile.
         */}
         <div className="orderTopControls">
           <input
@@ -340,10 +344,30 @@ export default function OrderPage() {
                   {p.casePack ? <div className="p" style={{ margin: "0" }}>Case: {p.casePack}</div> : null}
                   {p.moq ? <div className="p" style={{ margin: "0" }}>MOQ: {p.moq}</div> : null}
 
-                  <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <button type="button" className="button" onClick={() => addToCart(p.sku, "1")}>Add 1 carton</button>
-                    <button type="button" className="button" onClick={() => addToCart(p.sku, "10")}>Add 10 cartons</button>
-                  </div>
+                  <div className="orderAddRow">
+  <label className="orderQtyLabel" htmlFor={`qty-${p.sku}`}>Qty (cartons)</label>
+  <input
+    id={`qty-${p.sku}`}
+    className="orderQtyInput"
+    type="number"
+    min={1}
+    inputMode="numeric"
+    value={qtyBySku[p.sku] ?? "1"}
+    onChange={(e) =>
+      setQtyBySku((prev) => ({ ...prev, [p.sku]: e.target.value }))
+    }
+  />
+  <button
+    type="button"
+    className="button"
+    onClick={() => {
+      addToCart(p.sku, qtyBySku[p.sku] ?? "1");
+      setQtyBySku((prev) => ({ ...prev, [p.sku]: "1" }));
+    }}
+  >
+    Add to Order
+  </button>
+</div>
                 </div>
               </div>
             </div>
