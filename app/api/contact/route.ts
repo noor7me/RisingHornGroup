@@ -1,81 +1,17 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { CONTACT } from "@/lib/contact";
-import PDFDocument from "pdfkit";
 
 type Payload = {
   name?: string;
+  company?: string;
   email?: string;
   phone?: string;
-  company?: string;
   message?: string;
   inquiryType?: "general" | "orders" | "sales";
-  includePdf?: boolean;
-  order?: {
-    totalCartons?: number;
-    notes?: string;
-    items?: Array<{
-      sku: string;
-      name: string;
-      qtyCartons: number;
-      size?: string;
-      casePack?: string;
-      moq?: string;
-      origin?: string;
-    }>;
-  };
+  attachmentName?: string;
+  attachmentBase64?: string; // base64 (no data: prefix)
 };
-
-async function buildOrderPdf(body: Payload): Promise<Buffer> {
-  const doc = new PDFDocument({ size: "LETTER", margin: 50 });
-  const chunks: Buffer[] = [];
-  doc.on("data", (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
-
-  doc.fontSize(18).text("RisingHorn Group — Order Request", { underline: false });
-  doc.moveDown(0.8);
-
-  doc.fontSize(11);
-  doc.text(`Name: ${body.name || ""}`);
-  if (body.company) doc.text(`Company: ${body.company}`);
-  doc.text(`Phone: ${body.phone || ""}`);
-  if (body.email) doc.text(`Email: ${body.email}`);
-  doc.moveDown(0.8);
-
-  doc.fontSize(13).text("Items", { underline: true });
-  doc.moveDown(0.4);
-  doc.fontSize(11);
-
-  const items = body.order?.items ?? [];
-  for (const it of items) {
-    doc.font("Helvetica-Bold").text(`${it.name} (${it.sku})`);
-    doc.font("Helvetica").text(`Qty: ${it.qtyCartons} cartons`);
-    if (it.size) doc.text(`Size: ${it.size}`);
-    if (it.casePack) doc.text(`Case: ${it.casePack}`);
-    if (it.moq) doc.text(`MOQ: ${it.moq}`);
-    if (it.origin) doc.text(`Origin: ${it.origin}`);
-    doc.moveDown(0.5);
-  }
-
-  if (typeof body.order?.totalCartons === "number") {
-    doc.moveDown(0.4);
-    doc.font("Helvetica-Bold").text(`Carton total: ${body.order.totalCartons}`);
-    doc.font("Helvetica");
-  }
-
-  if (body.order?.notes) {
-    doc.moveDown(0.8);
-    doc.fontSize(13).text("Notes", { underline: true });
-    doc.moveDown(0.4);
-    doc.fontSize(11).text(body.order.notes);
-  }
-
-  doc.moveDown(1.0);
-  doc.fontSize(9).fillColor("#555").text(`Generated: ${new Date().toISOString()}`);
-  doc.end();
-
-  await new Promise<void>((resolve) => doc.on("end", () => resolve()));
-  return Buffer.concat(chunks);
-}
 
 function pickRecipient(inquiryType: Payload["inquiryType"]) {
   switch (inquiryType) {
@@ -103,9 +39,9 @@ export async function POST(req: Request) {
     const body = (await req.json()) as Payload;
 
     const name = (body.name || "").trim();
+    const company = (body.company || "").trim();
     const email = (body.email || "").trim();
     const phone = (body.phone || "").trim();
-    const company = (body.company || "").trim();
     const message = (body.message || "").trim();
     const inquiryType = body.inquiryType || "general";
 
@@ -113,8 +49,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
     // basic sanity limits
-    if (name.length > 120 || email.length > 200 || phone.length > 60 || company.length > 200 || message.length > 8000) {
+    if (name.length > 120 || company.length > 160 || email.length > 200 || phone.length > 60 || message.length > 8000) {
       return NextResponse.json({ error: "Input too long." }, { status: 400 });
+    }
+
+    const attachmentName = (body.attachmentName || "").trim();
+    const attachmentBase64 = (body.attachmentBase64 || "").trim();
+    let attachments:
+      | Array<{ filename: string; content: Buffer; contentType?: string }>
+      | undefined;
+
+    if (attachmentBase64) {
+      // Hard safety limit: ~2MB base64 (~1.5MB binary)
+      if (attachmentBase64.length > 3_000_000) {
+        return NextResponse.json({ error: "Attachment too large." }, { status: 400 });
+      }
+      try {
+        const buf = Buffer.from(attachmentBase64, "base64");
+        attachments = [
+          {
+            filename: attachmentName || "attachment.pdf",
+            content: buf,
+            contentType: "application/pdf",
+          },
+        ];
+      } catch {
+        return NextResponse.json({ error: "Invalid attachment." }, { status: 400 });
+      }
     }
 
     const to = pickRecipient(inquiryType);
@@ -136,25 +97,6 @@ export async function POST(req: Request) {
         <pre style="white-space:pre-wrap">${escapeHtml(message)}</pre>
       </div>
     `;
-
-    let attachments:
-      | {
-          filename: string;
-          content: string;
-          contentType: string;
-        }[]
-      | undefined = undefined;
-
-    if (body.includePdf && inquiryType === "orders" && (body.order?.items?.length || 0) > 0) {
-      const pdf = await buildOrderPdf({ ...body, name, email, phone, company, message });
-      attachments = [
-        {
-          filename: `RisingHorn_Order_${new Date().toISOString().slice(0, 10)}.pdf`,
-          content: pdf.toString("base64"),
-          contentType: "application/pdf",
-        },
-      ];
-    }
 
     const { error } = await resend.emails.send({
       from,
