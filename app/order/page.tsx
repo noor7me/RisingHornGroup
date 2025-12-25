@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Section from "../../components/Section";
+import { CONTACT } from "@/lib/contact";
 
 type Product = {
   sku: string;
@@ -65,7 +66,30 @@ export default function OrderPage() {
       <h1 className="h1">Order</h1>
       <p className="p">View currently available products and place an order request.</p>
 
+      
       <Section title="Available Products">
+        <div className="card" style={{ marginBottom: 14 }}>
+          <p className="p" style={{ margin: 0 }}>
+            To place an order or request current availability, email{" "}
+            <a className="underline" href={`mailto:${CONTACT.emails.orders}`}>{CONTACT.emails.orders}</a>
+            {" "}or contact us on WhatsApp.
+          </p>
+          <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {CONTACT.whatsapp.map((w) => (
+              <a
+                key={w.e164}
+                className="button"
+                style={{ textDecoration: "none" }}
+                href={`https://wa.me/${w.e164}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                WhatsApp {w.label}
+              </a>
+            ))}
+          </div>
+        </div>
+
         <input
           className="input"
           placeholder="Search products (SKU, name, category...)"
