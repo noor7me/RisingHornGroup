@@ -13,6 +13,16 @@ export type Product = {
   image: string;      // path under /public
 };
 
+// Extract MOQ cartons as a number from strings like "10 cartons".
+// Returns null if not parseable.
+export function parseMoqCartons(moq?: string): number | null {
+  if (!moq) return null;
+  const m = moq.match(/(\d+)/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
 // Sample catalog items (replace with real products as you finalize sourcing)
 export const PRODUCTS: Product[] = [
   {

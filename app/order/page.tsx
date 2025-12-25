@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import Section from "../../components/Section";
 import { CONTACT } from "@/lib/contact";
-import { PRODUCTS } from "@/lib/products";
+import { PRODUCTS, parseMoqCartons } from "@/lib/products";
+import jsPDF from "jspdf";
 
 type CartItem = { sku: string; qty: string };
 
@@ -32,6 +33,23 @@ export default function OrderPage() {
     );
   }, [query]);
 
+  const totalCartons = useMemo(() => {
+    return cart.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+  }, [cart]);
+
+  const moqViolations = useMemo(() => {
+    return cart
+      .map((item) => {
+        const p = findProduct(item.sku);
+        const moq = parseMoqCartons(p?.moq);
+        const qty = Number(item.qty) || 0;
+        return moq && qty < moq ? { sku: item.sku, moq, qty, name: p?.name ?? item.sku } : null;
+      })
+      .filter(Boolean) as Array<{ sku: string; moq: number; qty: number; name: string }>;
+  }, [cart]);
+
+  const canSubmit = cart.length > 0 && moqViolations.length === 0 && status !== "sending";
+
   function addToCart(sku: string, qty: string = "1") {
     setCart((prev) => {
       const existing = prev.find((x) => x.sku === sku);
@@ -52,9 +70,79 @@ export default function OrderPage() {
     setCart((prev) => prev.map((x) => (x.sku === sku ? { ...x, qty } : x)));
   }
 
+  function downloadPdf() {
+    if (cart.length === 0) return;
+    const doc = new jsPDF();
+
+    let y = 16;
+    doc.setFontSize(16);
+    doc.text("RisingHorn Group — Order Request", 14, y);
+    y += 10;
+
+    doc.setFontSize(11);
+    doc.text(`Name: ${name || ""}`, 14, y);
+    y += 6;
+    if (company) {
+      doc.text(`Company: ${company}`, 14, y);
+      y += 6;
+    }
+    doc.text(`Phone: ${phone || ""}`, 14, y);
+    y += 6;
+    if (email) {
+      doc.text(`Email: ${email}`, 14, y);
+      y += 6;
+    }
+
+    y += 4;
+    doc.setFontSize(12);
+    doc.text("Items", 14, y);
+    y += 7;
+    doc.setFontSize(10);
+
+    for (const item of cart) {
+      const p = findProduct(item.sku);
+      const title = p ? `${p.name} (${p.sku})` : item.sku;
+      const qty = `${item.qty} cartons`;
+      doc.text(title, 14, y);
+      y += 5;
+      doc.text(`Qty: ${qty}`, 18, y);
+      y += 5;
+      if (p?.size) {
+        doc.text(`Size: ${p.size}`, 18, y);
+        y += 5;
+      }
+      if (p?.casePack) {
+        doc.text(`Case: ${p.casePack}`, 18, y);
+        y += 5;
+      }
+      if (p?.moq) {
+        doc.text(`MOQ: ${p.moq}`, 18, y);
+        y += 5;
+      }
+      y += 2;
+      if (y > 270) {
+        doc.addPage();
+        y = 16;
+      }
+    }
+
+    if (notes) {
+      y += 6;
+      doc.setFontSize(12);
+      doc.text("Notes", 14, y);
+      y += 7;
+      doc.setFontSize(10);
+      const wrapped = doc.splitTextToSize(notes, 180);
+      doc.text(wrapped, 14, y);
+    }
+
+    const stamp = new Date().toISOString().slice(0, 10);
+    doc.save(`RisingHorn_Order_${stamp}.pdf`);
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (cart.length === 0) {
+    if (cart.length === 0 || moqViolations.length > 0) {
       setStatus("error");
       return;
     }
@@ -95,6 +183,23 @@ export default function OrderPage() {
           phone,
           email,
           message: lines.join("\n"),
+          includePdf: true,
+          order: {
+            items: cart.map((it) => {
+              const p = findProduct(it.sku);
+              return {
+                sku: it.sku,
+                name: p?.name ?? it.sku,
+                qtyCartons: Number(it.qty) || 0,
+                size: p?.size,
+                casePack: p?.casePack,
+                moq: p?.moq,
+                origin: p?.origin,
+              };
+            }),
+            totalCartons,
+            notes,
+          },
         }),
       });
 
@@ -141,14 +246,14 @@ export default function OrderPage() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+        <div className="orderControls">
           <input
             className="input"
             placeholder="Search products (SKU, name, category...)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <div style={{ display: "grid", gap: 12, gridTemplateColumns: "minmax(0, 1fr) 160px" }}>
+          <div className="orderPicker">
             <select className="input" value={pickerSku} onChange={(e) => setPickerSku(e.target.value)}>
               {PRODUCTS.map((p) => (
                 <option key={p.sku} value={p.sku}>
@@ -156,7 +261,7 @@ export default function OrderPage() {
                 </option>
               ))}
             </select>
-            <div style={{ display: "flex", gap: 10 }}>
+            <div className="orderPickerActions">
               <input
                 className="input"
                 placeholder="Qty"
@@ -172,25 +277,54 @@ export default function OrderPage() {
 
         {cart.length > 0 && (
           <div className="card" style={{ marginTop: 14 }}>
-            <div style={{ fontWeight: 800, marginBottom: 10 }}>Selected items</div>
+            <div className="cartSummary" style={{ marginBottom: 10 }}>
+              <div style={{ fontWeight: 800 }}>Selected items</div>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <div className="p" style={{ margin: 0, fontWeight: 700 }}>
+                  Carton total: {totalCartons}
+                </div>
+                <button type="button" className="button" onClick={downloadPdf}>
+                  Download PDF
+                </button>
+              </div>
+            </div>
+
+            {moqViolations.length > 0 && (
+              <div className="warn" style={{ marginBottom: 12 }}>
+                MOQ warning: some items are below the minimum. Please increase quantities before submitting.
+              </div>
+            )}
+
             <div style={{ display: "grid", gap: 10 }}>
               {cart.map((item) => {
                 const p = findProduct(item.sku);
+                const moq = parseMoqCartons(p?.moq);
+                const qty = Number(item.qty) || 0;
+                const belowMoq = moq ? qty < moq : false;
                 return (
-                  <div key={item.sku} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                    <div style={{ minWidth: 220, fontWeight: 700 }}>
-                      {p ? p.name : item.sku} <span style={{ fontWeight: 500 }}>({item.sku})</span>
+                  <div key={item.sku} className="cartRow">
+                    <div>
+                      <div className="cartName">
+                        {p ? p.name : item.sku} <span style={{ fontWeight: 500 }}>({item.sku})</span>
+                      </div>
+                      {belowMoq && (
+                        <div className="p" style={{ margin: "6px 0 0" }}>
+                          <span style={{ fontWeight: 800 }}>Below MOQ:</span> minimum {moq} cartons
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+
+                    <div className="cartQty">
                       <span className="p" style={{ margin: 0 }}>Qty (cartons)</span>
                       <input
                         className="input"
-                        style={{ width: 140 }}
+                        style={{ width: 120 }}
                         value={item.qty}
                         onChange={(e) => updateQty(item.sku, e.target.value)}
                       />
                     </div>
-                    <button type="button" className="button" onClick={() => removeFromCart(item.sku)}>
+
+                    <button type="button" className="button cartRemove" onClick={() => removeFromCart(item.sku)}>
                       Remove
                     </button>
                   </div>
@@ -203,13 +337,13 @@ export default function OrderPage() {
         <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
           {filtered.map((p) => (
             <div key={p.sku} className="card">
-              <div style={{ display: "grid", gap: 10, gridTemplateColumns: "180px 1fr", alignItems: "start" }}>
+              <div className="productRow">
                 <img
                   src={p.image}
                   alt={p.name}
                   width={180}
                   height={120}
-                  style={{ width: 180, height: 120, objectFit: "cover", borderRadius: 12, border: "1px solid #e6eee8" }}
+                  style={{ width: "100%", maxWidth: 180, height: 120, objectFit: "cover", borderRadius: 12, border: "1px solid #e6eee8" }}
                 />
                 <div>
                   <div className="badge">{p.category}</div>
@@ -242,12 +376,12 @@ export default function OrderPage() {
       <Section title="Place Order Request">
         <div className="card">
           <form id="order-form" onSubmit={submit} style={{ display: "grid", gap: 12 }}>
-            <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+            <div className="orderControls">
               <input className="input" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} required />
               <input className="input" placeholder="Company (optional)" value={company} onChange={(e) => setCompany(e.target.value)} />
             </div>
 
-            <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+            <div className="orderControls">
               <input className="input" placeholder="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required />
               <input className="input" placeholder="Email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
             </div>
@@ -258,6 +392,12 @@ export default function OrderPage() {
               </p>
             )}
 
+            {cart.length > 0 && moqViolations.length > 0 && (
+              <div className="warn">
+                MOQ validation: please increase quantities to meet each product's MOQ before submitting.
+              </div>
+            )}
+
             <textarea
               className="textarea"
               placeholder="Notes (destination city, delivery timing, preferred brand, etc.)"
@@ -265,14 +405,23 @@ export default function OrderPage() {
               onChange={(e) => setNotes(e.target.value)}
             />
 
-            <button className="button" type="submit" disabled={status === "sending"}>
-              {status === "sending" ? "Submitting..." : "Submit Order Request"}
-            </button>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button type="button" className="button" onClick={downloadPdf} disabled={cart.length === 0}>
+                Download PDF
+              </button>
+              <button className="button" type="submit" disabled={!canSubmit}>
+                {status === "sending" ? "Submitting..." : "Submit Order Request (PDF attached)"}
+              </button>
+            </div>
 
             {status === "sent" && <p className="p">Order request submitted. We’ll contact you soon.</p>}
             {status === "error" && (
               <p className="p">
-                {cart.length === 0 ? "Please select at least one product." : "Something went wrong. Please try again."}
+                {cart.length === 0
+                  ? "Please select at least one product."
+                  : moqViolations.length > 0
+                  ? "Some items are below MOQ. Please increase quantities."
+                  : "Something went wrong. Please try again."}
               </p>
             )}
           </form>
