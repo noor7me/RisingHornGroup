@@ -78,3 +78,31 @@ a{color:inherit;text-decoration:none}
   .cartQtyWrap{justify-content:space-between}
   .cartQtyInput{width:140px}
 }
+
+
+
+/* Mobile navigation */
+.menuButton{
+  display:none;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--green);
+  border-radius:12px;
+  padding:10px;
+  line-height:0;
+}
+@media (max-width: 720px){
+  .container{padding:18px 16px}
+  .navInner{padding:12px 16px}
+  .brand img{height:auto}
+  .menuButton{display:inline-flex;align-items:center;justify-content:center}
+  .tabs{
+    display:none;
+    width:100%;
+    flex-direction:column;
+    gap:10px;
+    padding-top:10px;
+  }
+  .tabs.tabsOpen{display:flex}
+  .tab{width:100%;text-align:center;font-size:18px;padding:12px 14px}
+}
