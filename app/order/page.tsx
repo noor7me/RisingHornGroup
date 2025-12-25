@@ -376,7 +376,7 @@ export default function OrderPage() {
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14, alignItems: "center" }}>
             <button
               type="button"
-              className="button"
+              className="button buttonGhost"
               onClick={downloadPdf}
               disabled={cart.length === 0}
             >
@@ -384,13 +384,13 @@ export default function OrderPage() {
             </button>
             <button
               type="button"
-              className="button"
+              className="button buttonSecondary"
               onClick={(e) => submit(e as any, false)}
               disabled={status === "sending" || cart.length === 0}
             >
               Submit (email only)
             </button>
-            <button type="submit" className="button" disabled={status === "sending" || cart.length === 0}>
+            <button type="submit" className="button buttonPrimary" disabled={status === "sending" || cart.length === 0}>
               Submit (PDF attached)
             </button>
             {status === "sent" ? <span className="p" style={{ margin: 0 }}>Sent! We will respond soon.</span> : null}
