@@ -130,7 +130,7 @@ export default function OrderPage() {
               <a
                 key={w.e164}
                 className="button"
-                href={w.link}
+                href={`https://wa.me/${w.e164}`}
                 target="_blank"
                 rel="noreferrer"
                 style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
