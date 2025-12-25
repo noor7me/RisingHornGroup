@@ -73,6 +73,37 @@ a{color:inherit;text-decoration:none}
 .cartQtyInput{width:140px}
 .cartTotals{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 
+/* Order page picker (mobile): keep dropdown visible */
+.orderTopControls{
+  display:grid;
+  gap:12px;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  align-items:start;
+}
+.orderPicker{
+  display:grid;
+  gap:12px;
+  grid-template-columns:minmax(0, 1fr) 180px;
+  align-items:start;
+}
+.orderPickerSelect{
+  width:100%;
+  min-width:0;
+}
+.orderPickerActions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+@media (max-width:720px){
+  .orderTopControls{grid-template-columns:1fr;}
+  .orderPicker{grid-template-columns:1fr;}
+  .orderPickerActions{flex-wrap:wrap;}
+  .orderPickerActions .input{flex:1 1 120px;}
+  .orderPickerActions .button{flex:0 0 auto;}
+}
+
 @media (max-width:720px){
   .cartRow{grid-template-columns:1fr;gap:10px}
   .cartQtyWrap{justify-content:space-between}

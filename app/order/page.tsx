@@ -230,22 +230,26 @@ export default function OrderPage() {
       </Section>
 
       <Section title="Available Products">
-        <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+        {/*
+          Mobile fix: these controls must stack on small screens.
+          Inline grid columns can cause the <select> to collapse/clip on mobile.
+        */}
+        <div className="orderTopControls">
           <input
             className="input"
             placeholder="Search products (SKU, name, category...)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <div style={{ display: "grid", gap: 12, gridTemplateColumns: "minmax(0, 1fr) 180px" }}>
-            <select className="input" value={pickerSku} onChange={(e) => setPickerSku(e.target.value)}>
+          <div className="orderPicker">
+            <select className="input orderPickerSelect" value={pickerSku} onChange={(e) => setPickerSku(e.target.value)}>
               {PRODUCTS.map((p) => (
                 <option key={p.sku} value={p.sku}>
                   {p.sku} — {p.name}
                 </option>
               ))}
             </select>
-            <div style={{ display: "flex", gap: 10 }}>
+            <div className="orderPickerActions">
               <input
                 className="input"
                 placeholder="Qty"
