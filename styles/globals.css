@@ -8,6 +8,7 @@
 html,body{padding:0;margin:0;background:#fff;color:var(--green);
 font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
 a{color:inherit;text-decoration:none}
+.underline{text-decoration:underline}
 .container{max-width:1080px;margin:0 auto;padding:28px 20px}
 .nav{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);z-index:10}
 .navInner{max-width:1080px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
@@ -54,19 +55,26 @@ a{color:inherit;text-decoration:none}
   margin-bottom:10px;
 }
 
-/* Order page responsive helpers */
-.orderControls{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
-.orderPicker{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) 160px}
-.cartRow{display:grid;gap:12px;align-items:center;grid-template-columns:1fr 160px 110px}
-.cartName{font-weight:700}
-.cartQty{display:flex;gap:8px;align-items:center;justify-content:flex-start}
-.cartRemove{justify-self:start}
-.productCardGrid{display:grid;gap:10px;grid-template-columns:180px 1fr;align-items:start}
+/* Order cart layout */
+.cartList{display:grid;gap:12px}
+.cartRow{
+  display:grid;
+  grid-template-columns: 1fr 160px 110px;
+  align-items:center;
+  gap:12px;
+  padding:12px 0;
+  border-bottom:1px dashed rgba(11,107,58,.45);
+}
+.cartRow:last-child{border-bottom:none}
+.cartName{font-weight:800;min-width:0}
+.cartNameSmall{font-weight:500;opacity:.85}
+.cartQtyWrap{display:flex;align-items:center;gap:8px;justify-content:flex-start}
+.cartQtyLabel{margin:0;color:var(--muted);font-size:13px}
+.cartQtyInput{width:140px}
+.cartTotals{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 
 @media (max-width:720px){
-  .orderControls{grid-template-columns:1fr}
-  .orderPicker{grid-template-columns:1fr}
-  .cartRow{grid-template-columns:1fr}
-  .cartRemove{justify-self:start}
-  .productCardGrid{grid-template-columns:1fr}
+  .cartRow{grid-template-columns:1fr;gap:10px}
+  .cartQtyWrap{justify-content:space-between}
+  .cartQtyInput{width:140px}
 }

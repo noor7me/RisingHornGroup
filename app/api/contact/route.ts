@@ -4,13 +4,12 @@ import { CONTACT } from "@/lib/contact";
 
 type Payload = {
   name?: string;
-  company?: string;
   email?: string;
   phone?: string;
   message?: string;
   inquiryType?: "general" | "orders" | "sales";
-  attachmentName?: string;
-  attachmentBase64?: string; // base64 (no data: prefix)
+  pdfBase64?: string;
+  pdfFilename?: string;
 };
 
 function pickRecipient(inquiryType: Payload["inquiryType"]) {
@@ -39,7 +38,6 @@ export async function POST(req: Request) {
     const body = (await req.json()) as Payload;
 
     const name = (body.name || "").trim();
-    const company = (body.company || "").trim();
     const email = (body.email || "").trim();
     const phone = (body.phone || "").trim();
     const message = (body.message || "").trim();
@@ -49,33 +47,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
     // basic sanity limits
-    if (name.length > 120 || company.length > 160 || email.length > 200 || phone.length > 60 || message.length > 8000) {
+    if (name.length > 120 || email.length > 200 || phone.length > 60 || message.length > 8000) {
       return NextResponse.json({ error: "Input too long." }, { status: 400 });
-    }
-
-    const attachmentName = (body.attachmentName || "").trim();
-    const attachmentBase64 = (body.attachmentBase64 || "").trim();
-    let attachments:
-      | Array<{ filename: string; content: Buffer; contentType?: string }>
-      | undefined;
-
-    if (attachmentBase64) {
-      // Hard safety limit: ~2MB base64 (~1.5MB binary)
-      if (attachmentBase64.length > 3_000_000) {
-        return NextResponse.json({ error: "Attachment too large." }, { status: 400 });
-      }
-      try {
-        const buf = Buffer.from(attachmentBase64, "base64");
-        attachments = [
-          {
-            filename: attachmentName || "attachment.pdf",
-            content: buf,
-            contentType: "application/pdf",
-          },
-        ];
-      } catch {
-        return NextResponse.json({ error: "Invalid attachment." }, { status: 400 });
-      }
     }
 
     const to = pickRecipient(inquiryType);
@@ -89,7 +62,6 @@ export async function POST(req: Request) {
       <div style="font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial;line-height:1.4">
         <h2>${subjectPrefix}</h2>
         <p><strong>Name:</strong> ${escapeHtml(name || "(not provided)")}</p>
-        <p><strong>Company:</strong> ${escapeHtml(company || "(not provided)")}</p>
         <p><strong>Email:</strong> ${escapeHtml(email || "(not provided)")}</p>
         <p><strong>Phone:</strong> ${escapeHtml(phone || "(not provided)")}</p>
         <p><strong>Inquiry Type:</strong> ${escapeHtml(inquiryType)}</p>
@@ -97,6 +69,15 @@ export async function POST(req: Request) {
         <pre style="white-space:pre-wrap">${escapeHtml(message)}</pre>
       </div>
     `;
+
+    const attachments = body.pdfBase64
+      ? [
+          {
+            filename: (body.pdfFilename || "RisingHorn-Order.pdf").slice(0, 120),
+            content: Buffer.from(body.pdfBase64, "base64"),
+          },
+        ]
+      : undefined;
 
     const { error } = await resend.emails.send({
       from,
