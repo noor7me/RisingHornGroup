@@ -22,6 +22,7 @@ export default function ContactPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
+  const [inquiryType, setInquiryType] = useState<"general" | "orders" | "sales">("general");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   async function onSubmit(e: React.FormEvent) {
@@ -32,11 +33,7 @@ export default function ContactPage() {
       const r = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email: email || undefined,
-          message: `Phone: ${phone || "(not provided)"}\nMessage: ${msg}`,
-        }),
+        body: JSON.stringify({ name, email: email || undefined, phone: phone || undefined, message: msg, inquiryType }),
       });
 
       if (!r.ok) throw new Error("Request failed");
@@ -46,6 +43,7 @@ export default function ContactPage() {
       setPhone("");
       setEmail("");
       setMsg("");
+      setInquiryType("general");
     } catch {
       setStatus("error");
     }

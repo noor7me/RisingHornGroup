@@ -48,9 +48,10 @@ export default function OrderPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name || "Order Request",
-          company,
-          email: email || "noemail@example.com",
-          message: `ORDER REQUEST\nSKU: ${selectedSku}\nQTY: ${qty}\nPhone: ${phone}\nMessage: ${message}`
+          email: email || undefined,
+          phone: phone || undefined,
+          inquiryType: "orders",
+          message: `Order request\nCompany: ${company || "(not provided)"}\nSKU: ${selectedSku}\nQuantity: ${qty}\n\n${message}`
         })
       });
       if (!res.ok) throw new Error("Request failed");
