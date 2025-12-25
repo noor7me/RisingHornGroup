@@ -3,20 +3,7 @@
 import { useMemo, useState } from "react";
 import Section from "../../components/Section";
 import { CONTACT } from "@/lib/contact";
-
-type Product = {
-  sku: string;
-  name: string;
-  category: "Snack" | "Confectionery" | "Seasoning";
-  pack: string;
-  notes?: string;
-};
-
-const PRODUCTS: Product[] = [
-  { sku: "RHG-SN-001", name: "Assorted Snack Mix (Sample)", category: "Snack", pack: "Carton", notes: "Placeholder item" },
-  { sku: "RHG-CN-001", name: "Assorted Candy (Sample)", category: "Confectionery", pack: "Carton", notes: "Placeholder item" },
-  { sku: "RHG-SE-001", name: "Seasoning Blend (Sample)", category: "Seasoning", pack: "Carton", notes: "Placeholder item" }
-];
+import { PRODUCTS } from "@/lib/products";
 
 export default function OrderPage() {
   const [query, setQuery] = useState("");
@@ -33,7 +20,17 @@ export default function OrderPage() {
     const q = query.trim().toLowerCase();
     if (!q) return PRODUCTS;
     return PRODUCTS.filter(p =>
-      [p.sku, p.name, p.category, p.pack, p.notes ?? ""].join(" ").toLowerCase().includes(q)
+      [
+        p.sku,
+        p.name,
+        p.category,
+        p.brand ?? "",
+        p.origin ?? "",
+        p.size ?? "",
+        p.casePack ?? "",
+        p.moq ?? "",
+        p.notes ?? ""
+      ].join(" ").toLowerCase().includes(q)
     );
   }, [query]);
 
@@ -41,7 +38,6 @@ export default function OrderPage() {
     e.preventDefault();
     setStatus("sending");
     try {
-      const payload = { selectedSku, qty, name, company, phone, email, message };
       // For now we reuse /api/contact as a simple receiver.
       const res = await fetch("/api/contact", {
         method: "POST",
@@ -101,11 +97,43 @@ export default function OrderPage() {
           {filtered.map((p) => (
             <label key={p.sku} className="card" style={{ cursor: "pointer" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                <div>
-                  <div className="badge">{p.category}</div>
-                  <div style={{ fontWeight: 800 }}>{p.name}</div>
-                  <div className="p" style={{ margin: 0 }}>SKU: {p.sku} • Pack: {p.pack}</div>
-                  {p.notes ? <div className="p" style={{ margin: "6px 0 0" }}>{p.notes}</div> : null}
+                <div style={{ display: "grid", gap: 10, gridTemplateColumns: "180px 1fr", alignItems: "start" }}>
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    width={180}
+                    height={120}
+                    style={{ width: 180, height: 120, objectFit: "cover", borderRadius: 12, border: "1px solid #e6eee8" }}
+                  />
+                  <div>
+                    <div className="badge">{p.category}</div>
+                    <div style={{ fontWeight: 900, fontSize: 18, marginTop: 6 }}>{p.name}</div>
+                    <div className="p" style={{ margin: "6px 0 0" }}>
+                      SKU: {p.sku}
+                      {p.brand ? ` • Brand: ${p.brand}` : ""}
+                      {p.origin ? ` • Origin: ${p.origin}` : ""}
+                    </div>
+                    <div className="p" style={{ margin: "6px 0 0" }}>
+                      {p.size ? `Size: ${p.size}` : ""}
+                      {p.casePack ? ` • Case: ${p.casePack}` : ""}
+                      {p.moq ? ` • MOQ: ${p.moq}` : ""}
+                    </div>
+                    {p.notes ? <div className="p" style={{ margin: "8px 0 0" }}>{p.notes}</div> : null}
+                    <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        className="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSelectedSku(p.sku);
+                          const el = document.getElementById("order-form");
+                          el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }}
+                      >
+                        Select for order
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <input
                   type="radio"
@@ -123,7 +151,7 @@ export default function OrderPage() {
 
       <Section title="Place Order Request">
         <div className="card">
-          <form onSubmit={submit} style={{ display: "grid", gap: 12 }}>
+          <form id="order-form" onSubmit={submit} style={{ display: "grid", gap: 12 }}>
             <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
               <input className="input" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} required />
               <input className="input" placeholder="Company (optional)" value={company} onChange={(e) => setCompany(e.target.value)} />

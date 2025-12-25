@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <rect width="1200" height="800" fill="#ffffff"/>
+  <rect x="60" y="60" width="1080" height="680" rx="28" fill="#f6fff7" stroke="#1f7a3a" stroke-width="8"/>
+  <text x="120" y="180" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="72" fill="#1f7a3a" font-weight="800">RisingHorn Group</text>
+  <text x="120" y="280" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="44" fill="#1f7a3a" font-weight="700">RHG-SN-102</text>
+  <text x="120" y="380" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="56" fill="#1f7a3a" font-weight="800">Spicy Corn Puffs</text>
+  <text x="120" y="470" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="34" fill="#1f7a3a" opacity="0.9">Sample product image placeholder</text>
+  <text x="120" y="560" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="34" fill="#1f7a3a" opacity="0.9">Replace this SVG with a real product photo later.</text>
+  <g transform="translate(860,140)">
+    <circle cx="150" cy="150" r="140" fill="#1f7a3a" opacity="0.12"/>
+    <circle cx="150" cy="150" r="96" fill="#1f7a3a" opacity="0.2"/>
+    <text x="150" y="172" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="72" fill="#1f7a3a" font-weight="900">RHG</text>
+  </g>
+</svg>
