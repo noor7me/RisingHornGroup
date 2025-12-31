@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import jsPDF from "jspdf";
 import Section from "../../components/Section";
 import { CONTACT } from "@/lib/contact";
-import { PRODUCTS, products, type Product } from "@/lib/products";
+import { PRODUCTS, type Product } from "@/lib/products";
 
 type CartItem = { sku: string; qty: string };
 
