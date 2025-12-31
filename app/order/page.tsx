@@ -8,8 +8,8 @@ import { PRODUCTS, type Product } from "@/lib/products";
 
 type CartItem = { sku: string; qty: string };
 
-function findProduct(sku: string) {
-  return products.find((p) => p.sku === sku);
+function findProduct(list: Product[], sku: string) {
+  return list.find((p) => p.sku === sku);
 }
 
 function waLink(e164: string) {
@@ -28,7 +28,7 @@ function buildOrderText(args: {
   phone: string;
   email: string;
   notes: string;
-}) {
+}, productsList: Product[]) {
   const { cart, name, company, phone, email, notes } = args;
 
   const lines: string[] = [];
@@ -41,7 +41,7 @@ function buildOrderText(args: {
   lines.push("Items:");
 
   for (const item of cart) {
-    const p = findProduct(item.sku);
+    const p = findProduct(productsList, item.sku);
     if (!p) continue;
     lines.push(`- ${p.name} (SKU: ${p.sku})`);
     lines.push(`  Quantity: ${item.qty} cartons`);
@@ -77,8 +77,8 @@ function makePdf(args: {
   phone: string;
   email: string;
   notes: string;
-}) {
-  const orderText = buildOrderText(args);
+}, productsForText: Product[]) {
+  const orderText = buildOrderText(args, productsForText);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
 
   doc.setFont("helvetica", "bold");
@@ -97,14 +97,15 @@ function makePdf(args: {
 
 export default function OrderPage() {
   const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const productsList = products;
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/products")
+    fetch("/api/products", { cache: "no-store" })
       .then((r) => r.json())
-      .then((json) => {
-        if (!cancelled && Array.isArray(json.products) && json.products.length) {
-          setProducts(json.products);
+      .then((j) => {
+        if (!cancelled && Array.isArray(j?.products) && j.products.length) {
+          setProducts(j.products);
         }
       })
       .catch(() => {});
@@ -138,8 +139,8 @@ const [name, setName] = useState("");
   const [selectedSku, setSelectedSku] = useState<string>("");
 const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter((p) =>
+    if (!q) return PRODUCTS;
+    return PRODUCTS.filter((p) =>
       [p.sku, p.name, p.category, p.brand, p.origin].filter(Boolean).join(" ").toLowerCase().includes(q)
     );
   }, [query]);
@@ -179,7 +180,7 @@ const filtered = useMemo(() => {
 
   async function downloadPdf() {
     if (cart.length === 0) return;
-    const doc = makePdf({ cart, name, company, phone, email, notes });
+    const doc = makePdf({ cart, name, company, phone, email, notes }, products);
     doc.save(`RHG-Order-${new Date().toISOString().slice(0, 10)}.pdf`);
   }
 
@@ -192,12 +193,12 @@ const filtered = useMemo(() => {
     try {
       setStatus("sending");
 
-      const message = buildOrderText({ cart, name, company, phone, email, notes });
+      const message = buildOrderText({ cart, name, company, phone, email, notes }, products);
 
       let pdfBase64: string | undefined;
       let pdfFilename: string | undefined;
       if (attachPdf) {
-        const doc = makePdf({ cart, name, company, phone, email, notes });
+        const doc = makePdf({ cart, name, company, phone, email, notes }, products);
         const buf = doc.output("arraybuffer");
         pdfBase64 = arrayBufferToBase64(buf);
         pdfFilename = `RHG-Order-${new Date().toISOString().slice(0, 10)}.pdf`;
@@ -302,7 +303,7 @@ const filtered = useMemo(() => {
 
             <div className="cartList" style={{ marginTop: 10 }}>
               {cart.map((item) => {
-                const p = findProduct(item.sku);
+                const p = findProduct(productsList, item.sku);
                 return (
                   <div key={item.sku} className="cartRow">
                     <div className="cartName">
