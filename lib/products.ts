@@ -10,7 +10,8 @@ export type Product = {
   casePack?: string;  // e.g. "24 x 92 g"
   moq?: string;       // minimum order quantity
   notes?: string;
-  image: string;      // path under /public
+  image: string;      // URL or path under /public
+  image_url?: string; // optional raw DB column
 };
 
 // Sample catalog items (replace with real products as you finalize sourcing)

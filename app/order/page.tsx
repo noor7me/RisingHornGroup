@@ -16,6 +16,31 @@ function waLink(e164: string) {
   return `https://wa.me/${e164}`;
 }
 
+// Normalize product image URLs so images display correctly in the product cards.
+function toProductImageSrc(imageUrl?: string | null): string {
+  if (!imageUrl) return "/products/placeholder.svg";
+  const url = String(imageUrl).trim();
+  if (!url) return "/products/placeholder.svg";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+
+  // If the DB stores a Storage path, build the public URL.
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const cleaned = url.replace(/^\/+/, "");
+  const looksLikeStoragePath =
+    cleaned.startsWith("product-images/") ||
+    cleaned.startsWith("public/product-images/") ||
+    cleaned.includes("/storage/v1/object/public/");
+
+  if (base && looksLikeStoragePath && !cleaned.includes("/storage/v1/object/public/")) {
+    // Accept both `product-images/x.png` and `public/product-images/x.png`
+    const storagePath = cleaned.startsWith("public/") ? cleaned : `public/${cleaned}`;
+    return `${base.replace(/\/$/, "")}/storage/v1/object/${storagePath}`;
+  }
+
+  // Site-relative path
+  return url.startsWith("/") ? url : `/${url}`;
+}
+
 function safeNum(value: string) {
   const n = Number(String(value ?? "").trim());
   return Number.isFinite(n) && n > 0 ? n : 0;
@@ -345,19 +370,32 @@ const filtered = useMemo(() => {
                   alignItems: "start",
                 }}
               >
-                <img
-                  src={(p as any).image || (p as any).image_url}
-                  alt={p.name}
-                  width={180}
-                  height={120}
+                <div
                   style={{
                     width: 180,
-                    height: 120,
-                    objectFit: "cover",
+                    height: 140,
                     borderRadius: 12,
                     border: "1px solid #e6eee8",
+                    background: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                    flexShrink: 0,
                   }}
-                />
+                >
+                  <img
+                    src={toProductImageSrc(((p as any).image_url ?? p.image) as string)}
+                    alt={p.name}
+                    width={180}
+                    height={140}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
                 <div>
                   <div className="badge">{p.category}</div>
                   <div style={{ fontWeight: 900, fontSize: 18, marginTop: 6 }}>{p.name}</div>
@@ -366,6 +404,11 @@ const filtered = useMemo(() => {
                     {p.brand ? ` • Brand: ${p.brand}` : ""}
                     {p.origin ? ` • Origin: ${p.origin}` : ""}
                   </div>
+                  {p.notes ? (
+                    <div className="p" style={{ margin: "8px 0 0", color: "var(--muted)" }}>
+                      {p.notes}
+                    </div>
+                  ) : null}
                   {p.size ? <div className="p" style={{ margin: "6px 0 0" }}>Size: {p.size}</div> : null}
                   {p.casePack ? <div className="p" style={{ margin: "0" }}>Case: {p.casePack}</div> : null}
                   {p.moq ? <div className="p" style={{ margin: "0" }}>MOQ: {p.moq}</div> : null}
