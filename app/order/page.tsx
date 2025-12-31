@@ -8,8 +8,8 @@ import { PRODUCTS as FALLBACK_PRODUCTS } from "@/lib/products";
 
 type CartItem = { sku: string; qty: string };
 
-function findProduct(sku: string) {
-  return PRODUCTS.find((p) => p.sku === sku);
+function findProduct(list: any[], sku: string) {
+  return list.find((p) => p.sku === sku);
 }
 
 function waLink(e164: string) {
@@ -28,7 +28,7 @@ function buildOrderText(args: {
   phone: string;
   email: string;
   notes: string;
-}) {
+}, productsList: any[]) {
   const { cart, name, company, phone, email, notes } = args;
 
   const lines: string[] = [];
@@ -41,7 +41,7 @@ function buildOrderText(args: {
   lines.push("Items:");
 
   for (const item of cart) {
-    const p = findProduct(item.sku);
+    const p = findProduct(productsList, item.sku);
     if (!p) continue;
     lines.push(`- ${p.name} (SKU: ${p.sku})`);
     lines.push(`  Quantity: ${item.qty} cartons`);
@@ -78,7 +78,7 @@ function makePdf(args: {
   email: string;
   notes: string;
 }) {
-  const orderText = buildOrderText(args);
+  const orderText = buildOrderText(args, productsList);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
 
   doc.setFont("helvetica", "bold");
@@ -103,6 +103,7 @@ export default function OrderPage() {
 
     
   const [products, setProducts] = useState<any[] | null>(null);
+  const productsList = (products ?? FALLBACK_PRODUCTS) as any[];
   const [prodErr, setProdErr] = useState<string>("");
 const [qtyBySku, setQtyBySku] = useState<Record<string, string>>({});
 const [name, setName] = useState("");
@@ -137,11 +138,11 @@ const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idl
   const [selectedSku, setSelectedSku] = useState<string>("");
 const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return PRODUCTS;
-    return PRODUCTS.filter((p) =>
+    if (!q) return productsList;
+    return productsList.filter((p) =>
       [p.sku, p.name, p.category, p.brand, p.origin].filter(Boolean).join(" ").toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, productsList]);
 
   const cartonTotal = useMemo(() => cart.reduce((sum, i) => sum + safeNum(i.qty), 0), [cart]);
 
@@ -191,7 +192,7 @@ const filtered = useMemo(() => {
     try {
       setStatus("sending");
 
-      const message = buildOrderText({ cart, name, company, phone, email, notes });
+      const message = buildOrderText({ cart, name, company, phone, email, notes }, productsList);
 
       let pdfBase64: string | undefined;
       let pdfFilename: string | undefined;
@@ -301,7 +302,7 @@ const filtered = useMemo(() => {
 
             <div className="cartList" style={{ marginTop: 10 }}>
               {cart.map((item) => {
-                const p = findProduct(item.sku);
+                const p = findProduct(productsList, item.sku);
                 return (
                   <div key={item.sku} className="cartRow">
                     <div className="cartName">
