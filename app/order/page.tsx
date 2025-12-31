@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import jsPDF from "jspdf";
 import Section from "../../components/Section";
 import { CONTACT } from "@/lib/contact";
-import { PRODUCTS as FALLBACK_PRODUCTS } from "@/lib/products";
+import { products, type Product } from "@/lib/products";
 
 type CartItem = { sku: string; qty: string };
 
-function findProduct(list: any[], sku: string) {
-  return list.find((p) => p.sku === sku);
+function findProduct(sku: string) {
+  return products.find((p) => p.sku === sku);
 }
 
 function waLink(e164: string) {
@@ -28,7 +28,7 @@ function buildOrderText(args: {
   phone: string;
   email: string;
   notes: string;
-}, productsList: any[]) {
+}) {
   const { cart, name, company, phone, email, notes } = args;
 
   const lines: string[] = [];
@@ -41,7 +41,7 @@ function buildOrderText(args: {
   lines.push("Items:");
 
   for (const item of cart) {
-    const p = findProduct(productsList, item.sku);
+    const p = findProduct(item.sku);
     if (!p) continue;
     lines.push(`- ${p.name} (SKU: ${p.sku})`);
     lines.push(`  Quantity: ${item.qty} cartons`);
@@ -78,7 +78,7 @@ function makePdf(args: {
   email: string;
   notes: string;
 }) {
-  const orderText = buildOrderText(args, productsForText);
+  const orderText = buildOrderText(args);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
 
   doc.setFont("helvetica", "bold");
@@ -96,53 +96,53 @@ function makePdf(args: {
 }
 
 export default function OrderPage() {
-  const [query, setQuery] = useState("");
-  const [pickerSku, setPickerSku] = useState(PRODUCTS[0]?.sku ?? "");
+  const [products, setProducts] = useState<Product[]>(products);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/products")
+      .then((r) => r.json())
+      .then((json) => {
+        if (!cancelled && Array.isArray(json.products) && json.products.length) {
+          setProducts(json.products);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+const [query, setQuery] = useState("");
+  const [pickerSku, setPickerSku] = useState("");
   const [pickerQty, setPickerQty] = useState("1");
+
+  useEffect(() => {
+    if (!pickerSku) {
+      const first = products[0]?.sku || "";
+      if (first) setPickerSku(first);
+    }
+  }, [products, pickerSku]);
   const [cart, setCart] = useState<CartItem[]>([]);
 
-    
-  const [products, setProducts] = useState<any[] | null>(null);
-  const productsList = (products ?? FALLBACK_PRODUCTS) as any[];
-  const [prodErr, setProdErr] = useState<string>("");
-const [qtyBySku, setQtyBySku] = useState<Record<string, string>>({});
+    const [qtyBySku, setQtyBySku] = useState<Record<string, string>>({});
 const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
-  
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setProdErr("");
-        const res = await fetch("/api/products", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to load products");
-        const j = await res.json();
-        const list = Array.isArray(j?.products) ? j.products : [];
-        if (!cancelled) setProducts(list);
-      } catch (e: any) {
-        if (!cancelled) {
-          setProdErr(e?.message || "Failed to load products");
-          setProducts([]);
-        }
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   
   const [quickAddQty, setQuickAddQty] = useState<number>(1);
   const [selectedSku, setSelectedSku] = useState<string>("");
 const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return productsList;
-    return productsList.filter((p) =>
+    if (!q) return products;
+    return products.filter((p) =>
       [p.sku, p.name, p.category, p.brand, p.origin].filter(Boolean).join(" ").toLowerCase().includes(q)
     );
-  }, [query, productsList]);
+  }, [query]);
 
   const cartonTotal = useMemo(() => cart.reduce((sum, i) => sum + safeNum(i.qty), 0), [cart]);
 
@@ -192,7 +192,7 @@ const filtered = useMemo(() => {
     try {
       setStatus("sending");
 
-      const message = buildOrderText({ cart, name, company, phone, email, notes }, productsList);
+      const message = buildOrderText({ cart, name, company, phone, email, notes });
 
       let pdfBase64: string | undefined;
       let pdfFilename: string | undefined;
@@ -271,7 +271,7 @@ const filtered = useMemo(() => {
           />
           <div className="orderPicker">
             <select className="input orderPickerSelect" value={pickerSku} onChange={(e) => setPickerSku(e.target.value)}>
-              {viewProducts.map((p) => (
+              {products.map((p) => (
                 <option key={p.sku} value={p.sku}>
                   {p.sku} — {p.name}
                 </option>
@@ -302,7 +302,7 @@ const filtered = useMemo(() => {
 
             <div className="cartList" style={{ marginTop: 10 }}>
               {cart.map((item) => {
-                const p = findProduct(productsList, item.sku);
+                const p = findProduct(item.sku);
                 return (
                   <div key={item.sku} className="cartRow">
                     <div className="cartName">

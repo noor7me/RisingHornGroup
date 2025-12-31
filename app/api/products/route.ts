@@ -1,35 +1,54 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
+import { PRODUCTS, type Product } from "@/lib/products";
 
-export const runtime = "nodejs";
-
+/**
+ * Returns active products from Supabase (public.products table),
+ * falling back to local sample PRODUCTS if Supabase is not configured
+ * or the query fails.
+ */
 export async function GET() {
   try {
-    const supabase = getSupabaseServerClient();
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({ source: "fallback", products: PRODUCTS });
+    }
+
+    // Expected columns in Supabase:
+    // sku, name, category, brand, origin, size, case_pack, moq, notes, image, active, sort_order
     const { data, error } = await supabase
       .from("products")
-      .select("id, sku, name, category, origin, size, case_pack, moq, description, image_url, available, sort_order")
-      .eq("available", true)
-      .order("sort_order", { ascending: true })
-      .order("name", { ascending: true });
+      .select("*")
+      .order("sort_order", { ascending: true });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) throw error;
 
-    const products = (data ?? []).map((p: any) => ({
-      id: p.id,
-      sku: p.sku,
-      name: p.name,
-      category: p.category,
-      origin: p.origin ?? "",
-      size: p.size ?? "",
-      casePack: p.case_pack ?? "",
-      moq: p.moq ?? "",
-      description: p.description ?? "",
-      image: p.image_url || "",
-    }));
+    const products: Product[] = (data || [])
+      .filter((row: any) => row.active !== false)
+      .map((row: any) => ({
+        sku: String(row.sku ?? ""),
+        name: String(row.name ?? ""),
+        category: (row.category ?? "Snack") as any,
+        brand: row.brand ?? undefined,
+        origin: row.origin ?? undefined,
+        size: row.size ?? undefined,
+        casePack: row.case_pack ?? row.casePack ?? undefined,
+        moq: row.moq ?? undefined,
+        notes: row.notes ?? undefined,
+        image: row.image ?? row.image_url ?? undefined,
+      }))
+      .filter((p) => p.sku && p.name);
 
-    return NextResponse.json({ products });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Server error" }, { status: 500 });
+    // If your DB is empty, still show fallback samples
+    if (!products.length) {
+      return NextResponse.json({ source: "fallback-empty", products: PRODUCTS });
+    }
+
+    return NextResponse.json({ source: "supabase", products });
+  } catch (e: any) {
+    return NextResponse.json(
+      { source: "fallback-error", products: PRODUCTS, error: String(e?.message || e) },
+      { status: 200 }
+    );
   }
 }

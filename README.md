@@ -22,14 +22,13 @@ Open http://localhost:3000
 - POST /api/contact
 
 
-## Live products via Supabase
-Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Vercel.
-The site loads products from `/api/products` and shows only rows where `available=true`.
+## Supabase products (optional)
+This site can load products from Supabase. If Supabase env vars are not set or your table is empty, the site falls back to sample products in `lib/products.ts`.
 
+### Required Vercel / local env vars
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-### Supabase environment variables
-This project supports either naming convention:
-- `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (recommended)
-- or `SUPABASE_URL` + `SUPABASE_ANON_KEY`
-
-In Vercel, add the variables and redeploy.
+### Supabase table
+Create a table named `products` with at least: `sku`, `name`, `category`.
+Optional columns: `brand`, `origin`, `size`, `case_pack`, `moq`, `notes`, `image` (or `image_url`), `active` (boolean), `sort_order` (number).
