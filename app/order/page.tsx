@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import jsPDF from "jspdf";
 import Section from "../../components/Section";
 import { CONTACT } from "@/lib/contact";
-import { PRODUCTS } from "@/lib/products";
+import { PRODUCTS as FALLBACK_PRODUCTS } from "@/lib/products";
 
 type CartItem = { sku: string; qty: string };
 
@@ -101,13 +101,36 @@ export default function OrderPage() {
   const [pickerQty, setPickerQty] = useState("1");
   const [cart, setCart] = useState<CartItem[]>([]);
 
-    const [qtyBySku, setQtyBySku] = useState<Record<string, string>>({});
+    
+  const [products, setProducts] = useState<any[] | null>(null);
+  const [prodErr, setProdErr] = useState<string>("");
+const [qtyBySku, setQtyBySku] = useState<Record<string, string>>({});
 const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setProdErr(\"\");
+        const res = await fetch(\"/api/products\", { cache: \"no-store\" });
+        if (!res.ok) throw new Error(\"Failed to load products\");
+        const j = await res.json();
+        const list = Array.isArray(j?.products) ? j.products : [];
+        if (!cancelled) setProducts(list);
+      } catch (e: any) {
+        if (!cancelled) {
+          setProdErr(e?.message || \"Failed to load products\");
+          setProducts([]);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   
   const [quickAddQty, setQuickAddQty] = useState<number>(1);
@@ -247,7 +270,7 @@ const filtered = useMemo(() => {
           />
           <div className="orderPicker">
             <select className="input orderPickerSelect" value={pickerSku} onChange={(e) => setPickerSku(e.target.value)}>
-              {PRODUCTS.map((p) => (
+              {viewProducts.map((p) => (
                 <option key={p.sku} value={p.sku}>
                   {p.sku} — {p.name}
                 </option>
