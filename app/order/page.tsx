@@ -123,7 +123,10 @@ function makePdf(args: {
 export default function OrderPage() {
   const [products, setProducts] = useState<Product[]>(PRODUCTS);
   const viewProducts = products && products.length ? products : PRODUCTS;
-  const productsList = products;
+  const productsList = viewProducts;
+
+  // Product details modal (opened when the user taps an image/description)
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -360,123 +363,116 @@ const filtered = useMemo(() => {
         )}
 
         <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
-          {filtered.map((p) => (
-            <div key={p.sku} className="card">
-              <div
-                style={{
-                  display: "grid",
-                  gap: 10,
-                  gridTemplateColumns: "180px 1fr",
-                  alignItems: "start",
-                }}
-              >
-                <div
-                  style={{
-                    width: 180,
-                    height: 140,
-                    borderRadius: 12,
-                    border: "1px solid #e6eee8",
-                    background: "#fff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "hidden",
-                    flexShrink: 0,
-                  }}
+          {filtered.map((p) => {
+            const desc = (((p as any).description ?? p.notes ?? "") as string).trim();
+            const imgSrc = toProductImageSrc((p as any).imageUrl ?? (p as any).image_url);
+            return (
+              <div key={p.sku} className="card productCard">
+                <button
+                  type="button"
+                  className="productMedia"
+                  onClick={() => setActiveProduct(p)}
+                  aria-label={`View details for ${p.name}`}
                 >
-                  <img
-                    src={toProductImageSrc(((p as any).image_url ?? p.image) as string)}
-                    alt={p.name}
-                    width={180}
-                    height={140}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
-                    }}
-                  />
-                </div>
-                <div>
-                  <div className="badge">{p.category}</div>
-                  <div style={{ fontWeight: 900, fontSize: 18, marginTop: 6 }}>{p.name}</div>
-                  <div className="p" style={{ margin: "6px 0 0" }}>
-                    SKU: {p.sku}
-                    {p.brand ? ` • Brand: ${p.brand}` : ""}
-                    {p.origin ? ` • Origin: ${p.origin}` : ""}
+                  <img className="productImg" src={imgSrc} alt={p.name} />
+                </button>
+
+                <div className="productInfo">
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                    <span className="pill">{p.category}</span>
                   </div>
-                  {p.notes ? (
-                    <div className="p" style={{ margin: "8px 0 0", color: "var(--muted)" }}>
-                      {p.notes}
-                    </div>
-                  ) : null}
-                  {p.size ? <div className="p" style={{ margin: "6px 0 0" }}>Size: {p.size}</div> : null}
-                  {p.casePack ? <div className="p" style={{ margin: "0" }}>Case: {p.casePack}</div> : null}
-                  {p.moq ? <div className="p" style={{ margin: "0" }}>MOQ: {p.moq}</div> : null}
+
+                  <div style={{ marginTop: 6 }}>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: "var(--rhg-dark)" }}>{p.name}</div>
+                    {desc ? (
+                      <button type="button" className="productDesc" onClick={() => setActiveProduct(p)}>
+                        {desc}
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div style={{ marginTop: 10, display: "grid", gap: 6, color: "var(--rhg-dark)" }}>
+                    {(p as any).size ? <div>Size: {(p as any).size}</div> : null}
+                    {(p as any).casePack ? <div>Case: {(p as any).casePack}</div> : null}
+                    {(p as any).moq ? <div>MOQ: {(p as any).moq}</div> : null}
+                  </div>
 
                   <div className="orderAddRow">
-  <label className="orderQtyLabel" htmlFor={`qty-${p.sku}`}>Qty (cartons)</label>
-  <input
-    id={`qty-${p.sku}`}
-    className="orderQtyInput"
-    type="number"
-    min={1}
-    inputMode="numeric"
-    value={qtyBySku[p.sku] ?? "1"}
-    onChange={(e) =>
-      setQtyBySku((prev) => ({ ...prev, [p.sku]: e.target.value }))
-    }
-  />
-  <button
-    type="button"
-    className="button"
-    onClick={() => {
-      addToCart(p.sku, qtyBySku[p.sku] ?? "1");
-      setQtyBySku((prev) => ({ ...prev, [p.sku]: "1" }));
-    }}
-  >
-    Add to Order
-  </button>
-</div>
+                    <div style={{ fontWeight: 700, color: "var(--rhg-dark)", whiteSpace: "nowrap" }}>Qty (cartons)</div>
+                    <input
+                      className="textInput"
+                      inputMode="numeric"
+                      value={qtyBySku[p.sku] ?? "1"}
+                      onChange={(e) => setQtyBySku((prev) => ({ ...prev, [p.sku]: e.target.value }))}
+                      style={{ maxWidth: 140 }}
+                    />
+                    <button
+                      className="button"
+                      type="button"
+                      onClick={() => addToCart(p.sku, qtyBySku[p.sku] ?? "1")}
+                    >
+                      Add to Order
+                    </button>
+                  </div>
                 </div>
               </div>
+            );
+          })}
+
+          {filtered.length === 0 ? (
+            <div className="card" style={{ padding: 14, color: "var(--rhg-muted)" }}>
+              No products match your search.
             </div>
-          ))}
+          ) : null}
         </div>
       </Section>
 
-      <Section title="Submit Order Request">
-        <form className="card" onSubmit={(e) => submit(e, true)}>
-          <div className="grid" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+      <Section title="Submit Order Request" subtitle="Send your order request by email. You can also download a PDF copy.">
+        <form
+          onSubmit={(e) => submit(e, true)}
+          style={{
+            background: "rgba(255,255,255,0.7)",
+            border: "1px solid rgba(9, 80, 33, 0.18)",
+            borderRadius: 18,
+            padding: 14,
+          }}
+        >
+          <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
             <div>
-              <div className="p" style={{ margin: "0 0 6px" }}>Name</div>
+              <div className="p" style={{ margin: "0 0 6px" }}>
+                Your name
+              </div>
               <input className="input" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             <div>
-              <div className="p" style={{ margin: "0 0 6px" }}>Company</div>
+              <div className="p" style={{ margin: "0 0 6px" }}>
+                Company
+              </div>
               <input className="input" value={company} onChange={(e) => setCompany(e.target.value)} />
             </div>
             <div>
-              <div className="p" style={{ margin: "0 0 6px" }}>Phone</div>
+              <div className="p" style={{ margin: "0 0 6px" }}>
+                Phone
+              </div>
               <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} required />
             </div>
             <div>
-              <div className="p" style={{ margin: "0 0 6px" }}>Email (optional)</div>
+              <div className="p" style={{ margin: "0 0 6px" }}>
+                Email (optional)
+              </div>
               <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
           </div>
 
           <div style={{ marginTop: 12 }}>
-            <div className="p" style={{ margin: "0 0 6px" }}>Notes (optional)</div>
+            <div className="p" style={{ margin: "0 0 6px" }}>
+              Notes (optional)
+            </div>
             <textarea className="textarea" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14, alignItems: "center" }}>
-            <button
-              type="button"
-              className="button"
-              onClick={downloadPdf}
-              disabled={cart.length === 0}
-            >
+            <button type="button" className="button" onClick={downloadPdf} disabled={cart.length === 0}>
               Download PDF
             </button>
             <button
@@ -491,12 +487,47 @@ const filtered = useMemo(() => {
               Submit (PDF attached)
             </button>
             {status === "sent" ? <span className="p" style={{ margin: 0 }}>Sent! We will respond soon.</span> : null}
-            {status === "error" ? (
-              <span className="p" style={{ margin: 0 }}>Error sending. Please try again or email us.</span>
-            ) : null}
+            {status === "error" ? <span className="p" style={{ margin: 0 }}>Error sending. Please try again or email us.</span> : null}
           </div>
         </form>
       </Section>
+
+      {activeProduct ? (
+        <div className="modalOverlay" onClick={() => setActiveProduct(null)}>
+          <div className="modalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="modalHeader">
+              <div>
+                <div className="modalTitle">{activeProduct.name}</div>
+                <div className="modalSubtitle">{activeProduct.category}{activeProduct.origin ? ` • ${activeProduct.origin}` : ""}</div>
+              </div>
+              <button type="button" className="modalClose" onClick={() => setActiveProduct(null)} aria-label="Close">
+                ✕
+              </button>
+            </div>
+            <div className="modalBody">
+              <div className="modalMedia">
+                <img
+                  src={toProductImageSrc(activeProduct.image_url)}
+                  alt={activeProduct.name}
+                  className="modalImg"
+                />
+              </div>
+              <div className="modalInfo">
+                <div className="modalFacts">
+                  {activeProduct.sku ? <div><b>SKU:</b> {activeProduct.sku}</div> : null}
+                  {activeProduct.brand ? <div><b>Brand:</b> {activeProduct.brand}</div> : null}
+                  {activeProduct.size ? <div><b>Size:</b> {activeProduct.size}</div> : null}
+                  {(activeProduct.casePack) ? <div><b>Case:</b> {activeProduct.casePack}</div> : null}
+                  {activeProduct.moq ? <div><b>MOQ:</b> {activeProduct.moq}</div> : null}
+                </div>
+                {(activeProduct.notes) ? (
+                  <div className="modalDesc">{activeProduct.notes}</div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
