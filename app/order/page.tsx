@@ -346,7 +346,7 @@ const filtered = useMemo(() => {
                 }}
               >
                 <img
-                  src={p.image}
+                  src={(p as any).image || (p as any).image_url}
                   alt={p.name}
                   width={180}
                   height={120}

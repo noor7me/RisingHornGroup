@@ -32,7 +32,7 @@ export default function ProductsPage() {
           <div key={p.sku} className="card">
             {p.image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img className="prodImg" src={p.image} alt={p.name} />
+              <img className="prodImg" src={(p as any).image || (p as any).image_url} alt={p.name} />
             ) : (
               <div className="prodImg" aria-label="No product image yet">
                 <div style={{ textAlign: "center", color: "#245b3f", fontWeight: 800 }}>Image coming soon</div>
