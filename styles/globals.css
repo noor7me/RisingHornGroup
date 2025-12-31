@@ -319,7 +319,8 @@ a{color:inherit;text-decoration:none}
     Using a small left padding avoids the first character being cut off
     while keeping the visual layout the same.
   */
-  padding:0 0 0 6px;
+  /* extra inset prevents the first letter from being clipped on small screens */
+  padding:0 6px 0 14px;
   border:0;
   background:transparent;
   text-align:left;
