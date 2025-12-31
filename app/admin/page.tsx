@@ -12,23 +12,26 @@ export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string>("");
 
-  async function checkAdminByEmail(userEmail: string) {
-    // Expect a simple allow-list table: public.admin_users(email text primary key)
-    const { data, error } = await supabase.from("admin_users").select("email").eq("email", userEmail).maybeSingle();
+  async function verifyAdmin(accessToken: string) {
+    const res = await fetch("/api/admin/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ access_token: accessToken }),
+    });
 
-    if (error) {
-      // If the table/policy isn't ready yet, show a clear message.
-      setStatus("error");
-      setMessage(error.message);
-      return;
-    }
-
-    if (!data?.email) {
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
       setStatus("not_admin");
+      if (txt) setMessage(txt);
       return;
     }
 
-    setStatus("admin");
+    const json = (await res.json()) as { ok?: boolean };
+    if (json?.ok) {
+      setStatus("admin");
+    } else {
+      setStatus("not_admin");
+    }
   }
 
   useEffect(() => {
@@ -36,21 +39,21 @@ export default function AdminPage() {
 
     (async () => {
       const { data } = await supabase.auth.getSession();
-      const userEmail = data.session?.user?.email ?? "";
-      if (!userEmail) {
+      const accessToken = data.session?.access_token ?? "";
+      if (!accessToken) {
         setStatus("signed_out");
         return;
       }
-      await checkAdminByEmail(userEmail);
+      await verifyAdmin(accessToken);
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const userEmail = session?.user?.email ?? "";
-      if (!userEmail) {
+      const accessToken = session?.access_token ?? "";
+      if (!accessToken) {
         setStatus("signed_out");
         return;
       }
-      await checkAdminByEmail(userEmail);
+      await verifyAdmin(accessToken);
     });
 
     unsub = () => sub.subscription.unsubscribe();
