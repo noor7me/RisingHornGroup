@@ -46,18 +46,20 @@ export default function ProductsPage() {
                 {p.origin ? <span className="badge">Origin: {p.origin}</span> : null}
                 <span className="badge">SKU: {p.sku}</span>
               </div>
-              <div style={{ marginTop: 8 }}>
-                {p.size ? <div><b>Size:</b> {p.size}</div> : null}
-                {p.casePack ? <div><b>Case:</b> {p.casePack}</div> : null}
-                {p.moq ? <div><b>MOQ:</b> {p.moq}</div> : null}
-                {p.notes ? <div style={{ marginTop: 6 }}><b>Notes:</b> {p.notes}</div> : null}
-              </div>
-            </div>
+              <div className="prodBottomRow">
+                <div className="prodDetails">
+                  {p.size ? <div><b>Size:</b> {p.size}</div> : null}
+                  {p.casePack ? <div><b>Case:</b> {p.casePack}</div> : null}
+                  {p.moq ? <div><b>MOQ:</b> {p.moq}</div> : null}
+                  {p.notes ? <div style={{ marginTop: 6 }}><b>Notes:</b> {p.notes}</div> : null}
+                </div>
 
-            <div style={{ marginTop: 12 }}>
-              <Link href="/order" className="btn" style={{ width: "100%" }}>
-                Order Request
-              </Link>
+                <div className="prodCta">
+                  <Link href="/order" className="btn">
+                    Order Request
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         ))}
