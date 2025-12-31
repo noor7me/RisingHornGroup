@@ -489,3 +489,127 @@ a{color:inherit;text-decoration:none}
     max-height:40vh;
   }
 }
+
+/* ---------------- Admin (Products Manager) ---------------- */
+.adminToolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.adminToolbar input,
+.adminToolbar select,
+.adminToolbar textarea {
+  padding: 10px 12px;
+  border: 1px solid rgba(7, 90, 36, 0.18);
+  border-radius: 12px;
+  outline: none;
+}
+
+.adminToolbar input:focus,
+.adminToolbar select:focus,
+.adminToolbar textarea:focus {
+  border-color: rgba(7, 90, 36, 0.35);
+  box-shadow: 0 0 0 3px rgba(7, 90, 36, 0.08);
+}
+
+.adminTableWrap {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid rgba(7, 90, 36, 0.14);
+  border-radius: 16px;
+}
+
+.adminTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 820px;
+}
+
+.adminTable th,
+.adminTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(7, 90, 36, 0.10);
+  text-align: left;
+  vertical-align: top;
+}
+
+.adminTable th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: rgba(7, 90, 36, 0.88);
+}
+
+.adminPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(7, 90, 36, 0.20);
+  background: rgba(7, 90, 36, 0.05);
+  font-size: 12px;
+}
+
+.adminActions {
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.adminLink {
+  text-decoration: underline;
+  color: rgba(7, 90, 36, 0.92);
+}
+
+.adminDanger {
+  background: #b91c1c;
+}
+
+.adminDanger:hover {
+  filter: brightness(0.92);
+}
+
+.adminForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.adminForm .full {
+  grid-column: 1 / -1;
+}
+
+.adminForm label {
+  font-size: 13px;
+  color: rgba(7, 90, 36, 0.88);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.adminForm input,
+.adminForm select,
+.adminForm textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(7, 90, 36, 0.18);
+  border-radius: 12px;
+}
+
+.adminForm textarea {
+  min-height: 96px;
+}
+
+@media (max-width: 640px) {
+  .adminForm {
+    grid-template-columns: 1fr;
+  }
+  .adminTable {
+    min-width: 660px;
+  }
+}

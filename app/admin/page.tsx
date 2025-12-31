@@ -163,7 +163,7 @@ export default function AdminPage() {
               <div>
                 <h3 style={{ marginTop: 0 }}>Welcome, Admin</h3>
                 <p style={{ margin: 0, opacity: 0.8 }}>
-                  Next step: we can add a simple Products Manager here (create/update/disable products, upload images).
+                  Manage your catalog and images from the Products Manager.
                 </p>
               </div>
 
@@ -173,6 +173,9 @@ export default function AdminPage() {
             </div>
 
             <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
+              <a className="button" href="/admin/products" style={{ textDecoration: "none", textAlign: "center" }}>
+                Products Manager
+              </a>
               <a className="button" href="/products" style={{ textDecoration: "none", textAlign: "center" }}>
                 View Products page
               </a>
