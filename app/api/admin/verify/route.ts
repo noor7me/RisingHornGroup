@@ -4,18 +4,26 @@ import { isEmailAllowed } from "@/lib/admin";
 
 type Body = { access_token?: string };
 
-function getServiceClient() {
+/**
+ * Verify the currently signed-in user by validating their access token.
+ * We intentionally use the **anon** key here so you do NOT need to expose
+ * your Supabase Service Role key to Vercel.
+ */
+function getAnonClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceKey) return null;
-  return createClient(url, serviceKey, { auth: { persistSession: false } });
+  const anonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    "";
+  if (!url || !anonKey) return null;
+  return createClient(url, anonKey, { auth: { persistSession: false } });
 }
 
 export async function POST(req: Request) {
-  const supabase = getServiceClient();
+  const supabase = getAnonClient();
   if (!supabase) {
     return NextResponse.json(
-      { ok: false, error: "Server missing SUPABASE_SERVICE_ROLE_KEY" },
+      { ok: false, error: "Server missing Supabase URL/ANON key" },
       { status: 500 }
     );
   }

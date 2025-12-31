@@ -21,7 +21,7 @@ export default function AdminPage() {
 
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
-      setStatus("not_admin");
+      setStatus(res.status >= 500 ? "error" : "not_admin");
       if (txt) setMessage(txt);
       return;
     }
@@ -148,6 +148,9 @@ export default function AdminPage() {
             <p style={{ marginTop: 0 }}>
               You are signed in, but your account is not authorized for admin access.
             </p>
+            {message ? (
+              <p style={{ whiteSpace: "pre-wrap", opacity: 0.8, marginTop: 8 }}>{message}</p>
+            ) : null}
             <button className="button" type="button" onClick={signOut}>
               Sign out
             </button>
