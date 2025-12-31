@@ -78,7 +78,7 @@ function makePdf(args: {
   email: string;
   notes: string;
 }) {
-  const orderText = buildOrderText(args, productsList);
+  const orderText = buildOrderText(args, productsForText);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
 
   doc.setFont("helvetica", "bold");
