@@ -391,12 +391,6 @@ const filtered = useMemo(() => {
                     ) : null}
                   </div>
 
-                  <div style={{ marginTop: 10, display: "grid", gap: 6, color: "var(--rhg-dark)" }}>
-                    {(p as any).size ? <div>Size: {(p as any).size}</div> : null}
-                    {(p as any).casePack ? <div>Case: {(p as any).casePack}</div> : null}
-                    {(p as any).moq ? <div>MOQ: {(p as any).moq}</div> : null}
-                  </div>
-
                   <div className="orderAddRow">
                     <div style={{ fontWeight: 700, color: "var(--rhg-dark)", whiteSpace: "nowrap" }}>Qty (cartons)</div>
                     <input
