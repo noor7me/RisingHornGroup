@@ -97,6 +97,7 @@ function makePdf(args: {
 
 export default function OrderPage() {
   const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const viewProducts = products && products.length ? products : PRODUCTS;
   const productsList = products;
 
   useEffect(() => {
@@ -140,7 +141,7 @@ const [name, setName] = useState("");
 const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return PRODUCTS;
-    return PRODUCTS.filter((p) =>
+    return viewProducts.filter((p) =>
       [p.sku, p.name, p.category, p.brand, p.origin].filter(Boolean).join(" ").toLowerCase().includes(q)
     );
   }, [query]);
