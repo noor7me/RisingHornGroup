@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import jsPDF from "jspdf";
 import Section from "../../components/Section";
 import { CONTACT } from "@/lib/contact";
-import { products, type Product } from "@/lib/products";
+import { PRODUCTS, products, type Product } from "@/lib/products";
 
 type CartItem = { sku: string; qty: string };
 
@@ -96,7 +96,7 @@ function makePdf(args: {
 }
 
 export default function OrderPage() {
-  const [products, setProducts] = useState<Product[]>(products);
+  const [products, setProducts] = useState<Product[]>(PRODUCTS);
 
   useEffect(() => {
     let cancelled = false;

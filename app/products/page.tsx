@@ -7,7 +7,7 @@ const categories = [
 ];
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>(products);
+  const [products, setProducts] = useState<Product[]>(PRODUCTS);
 
   useEffect(() => {
     let cancelled = false;
