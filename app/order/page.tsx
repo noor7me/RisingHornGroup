@@ -115,15 +115,15 @@ const [name, setName] = useState("");
     let cancelled = false;
     (async () => {
       try {
-        setProdErr(\"\");
-        const res = await fetch(\"/api/products\", { cache: \"no-store\" });
-        if (!res.ok) throw new Error(\"Failed to load products\");
+        setProdErr("");
+        const res = await fetch("/api/products", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to load products");
         const j = await res.json();
         const list = Array.isArray(j?.products) ? j.products : [];
         if (!cancelled) setProducts(list);
       } catch (e: any) {
         if (!cancelled) {
-          setProdErr(e?.message || \"Failed to load products\");
+          setProdErr(e?.message || "Failed to load products");
           setProducts([]);
         }
       }
