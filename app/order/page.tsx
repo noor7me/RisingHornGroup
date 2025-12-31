@@ -140,11 +140,11 @@ const [name, setName] = useState("");
   const [selectedSku, setSelectedSku] = useState<string>("");
 const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return PRODUCTS;
+    if (!q) return viewProducts;
     return viewProducts.filter((p) =>
       [p.sku, p.name, p.category, p.brand, p.origin].filter(Boolean).join(" ").toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, viewProducts]);
 
   const cartonTotal = useMemo(() => cart.reduce((sum, i) => sum + safeNum(i.qty), 0), [cart]);
 
