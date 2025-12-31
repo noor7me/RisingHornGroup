@@ -1,13 +1,17 @@
 export const CONTACT = {
+  phones: [
+    { label: "+1 206 790 9728", e164: "12067909728" },
+    { label: "+252 61 594 7250", e164: "252615947250" },
+  ],
+  // WhatsApp-enabled numbers (same as phones). `link` is used by the UI.
+  whatsapp: [
+    { label: "+1 206 790 9728", e164: "12067909728", link: "https://wa.me/12067909728" },
+    { label: "+252 61 594 7250", e164: "252615947250", link: "https://wa.me/252615947250" },
+  ],
   emails: {
-    info: "info@risinghorn.com",
     orders: "orders@risinghorn.com",
     sales: "sales@risinghorn.com",
+    info: "info@risinghorn.com",
+    general: "info@risinghorn.com",
   },
-  // WhatsApp numbers (Somalia format). Update anytime.
-  whatsapp: [
-    { label: "+252 61 234 5678", e164: "252612345678" },
-    { label: "+252 62 345 6789", e164: "252623456789" },
-    { label: "+252 65 987 6543", e164: "252659876543" },
-  ],
-} as const;
+};
