@@ -1,6 +1,7 @@
 export type ProductCategory = "Snack" | "Confectionery" | "Seasoning";
 
 export type Product = {
+  id?: string;         // Supabase UUID (optional for fallback items)
   sku: string;
   name: string;
   category: ProductCategory;
@@ -10,9 +11,11 @@ export type Product = {
   casePack?: string;  // e.g. "24 x 92 g"
   moq?: string;       // minimum order quantity
   notes?: string;
-  image: string;      // URL or path under /public
-  image_url?: string; // optional raw DB column
+  image: string;      // main image URL or path under /public
+  images?: string[];  // optional gallery images (URLs/paths)
+  image_url?: string; // optional raw DB column (compat)
 };
+
 
 // Sample catalog items (replace with real products as you finalize sourcing)
 export const PRODUCTS: Product[] = [

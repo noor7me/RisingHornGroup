@@ -127,6 +127,7 @@ export default function OrderPage() {
 
   // Product details modal (opened when the user taps an image/description)
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const [activeImage, setActiveImage] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -142,6 +143,17 @@ export default function OrderPage() {
       cancelled = true;
     };
   }, []);
+
+// When the product details modal opens, default to the main image.
+useEffect(() => {
+  if (!activeProduct) return;
+  const main = (activeProduct.image_url || activeProduct.image || "").toString();
+  const extras = Array.isArray(activeProduct.images) ? activeProduct.images : [];
+  const all = [main, ...extras].filter(Boolean);
+  setActiveImage(all[0] || "");
+}, [activeProduct]);
+
+
 
 const [query, setQuery] = useState("");
   const [pickerSku, setPickerSku] = useState("");
@@ -501,10 +513,35 @@ const filtered = useMemo(() => {
             <div className="modalBody">
               <div className="modalMedia">
                 <img
-                  src={toProductImageSrc(activeProduct.image_url)}
+                  src={toProductImageSrc(activeImage || activeProduct.image_url || (activeProduct as any).image)}
                   alt={activeProduct.name}
                   className="modalImg"
                 />
+                {(() => {
+                  const main = (activeProduct.image_url || (activeProduct as any).image || "").toString();
+                  const extras = Array.isArray(activeProduct.images) ? activeProduct.images : [];
+                  const all = [main, ...extras].filter(Boolean);
+                  if (all.length <= 1) return null;
+                  return (
+                    <div className="thumbRow" role="list" aria-label="More product images">
+                      {all.map((src, i) => {
+                        const u = toProductImageSrc(src);
+                        const isActive = src === activeImage;
+                        return (
+                          <button
+                            key={`${src}-${i}`}
+                            type="button"
+                            className={isActive ? "thumbBtn thumbActive" : "thumbBtn"}
+                            onClick={() => setActiveImage(src)}
+                            aria-label={`View image ${i + 1}`}
+                          >
+                            <img src={u} alt={`${activeProduct.name} image ${i + 1}`} className="thumbImg" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
               <div className="modalInfo">
                 <div className="modalFacts">
