@@ -11,8 +11,8 @@ export default function HomePage() {
           <div className="homeHeroCard">
             <div className="homeHeroMedia">
               <Image
-                src="/home/hero-distribution-trucks.png"
-                alt="Distribution trucks for import and export logistics"
+                src="/home/warehouse-pallets.png"
+                alt="Import • Export • Distribution (warehouse operations)"
                 fill
                 priority
                 className="homeHeroImg"
@@ -76,8 +76,8 @@ export default function HomePage() {
           <div className="homeCard">
             <div className="homeCardMedia">
               <Image
-                src="/home/warehouse-pallets.png"
-                alt="Warehousing and fulfillment"
+                src="/home/hero-distribution-trucks.png"
+                alt="Distribution-ready logistics (trucks)"
                 fill
                 className="homeCardImg"
               />
