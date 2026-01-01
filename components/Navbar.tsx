@@ -47,7 +47,14 @@ export default function Navbar() {
     <header className="nav">
       <div className="navInner">
         <Link className="brand" href="/" aria-label="RisingHorn Group Home">
-          <Image src="/logo.svg" alt="RisingHorn Group" width={160} height={56} priority />
+          <Image
+            src="/logo.png"
+            alt="RisingHorn Group"
+            width={180}
+            height={64}
+            priority
+            style={{ width: "auto", height: 44, objectFit: "contain" }}
+          />
         </Link>
 
         <button
