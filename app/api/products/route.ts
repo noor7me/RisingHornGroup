@@ -87,8 +87,8 @@ export async function GET() {
   // 3) Map to UI shape
   const products = productsDb
     .map((p) => {
-      const main = normalizeImageUrl(p.image_url) || undefined;
       const gallery = (imagesByProduct[p.id] || []).filter(Boolean);
+      const main = normalizeImageUrl(p.image_url) || gallery[0] || undefined;
       // Avoid duplicates (main image already in gallery)
       const images = gallery.filter((u) => !main || u !== main);
 
