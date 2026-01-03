@@ -34,63 +34,36 @@ type DbProduct = {
   moq: string | null;
   description: string | null;
   notes: string | null;
-  image_url: string | null;
+  image_url: string | null; // single image per product
   available: boolean;
-  sort_order: number | null;
+  sort_order: number;
 };
 
 export async function GET() {
   const supabase = getSupabaseClient();
 
-  // Fallback: static list if Supabase isn't configured
+  // If env vars are not set, fall back to local sample products
   if (!supabase) {
-    return NextResponse.json({ source: "fallback-empty", products: PRODUCTS });
+    return NextResponse.json({ source: "fallback-env-missing", products: PRODUCTS });
   }
 
-  // 1) Fetch available products
   const { data: rows, error } = await supabase
     .from("products")
-    .select(
-      "id, sku, name, category, brand, origin, size, case_pack, moq, description, notes, image_url, available, sort_order"
-    )
+    .select("*")
     .eq("available", true)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
+  // If Supabase fails for any reason, fall back to local sample products
   if (error || !rows) {
-    return NextResponse.json({ source: "fallback-empty", products: PRODUCTS });
+    return NextResponse.json({ source: "fallback-supabase-error", products: PRODUCTS });
   }
 
   const productsDb = rows as unknown as DbProduct[];
-  const productIds = productsDb.map((p) => p.id).filter(Boolean);
 
-  // 2) Fetch gallery images (admin-managed) from product_images table
-  let imagesByProduct: Record<string, string[]> = {};
-  if (productIds.length) {
-    const { data: imgs, error: imgErr } = await supabase
-      .from("product_images")
-      .select("product_id, image_url, sort_order")
-      .in("product_id", productIds)
-      .order("sort_order", { ascending: true });
-
-    if (!imgErr && Array.isArray(imgs)) {
-      for (const row of imgs as any[]) {
-        const pid = String(row.product_id || "");
-        const url = normalizeImageUrl(row.image_url);
-        if (!pid || !url) continue;
-        if (!imagesByProduct[pid]) imagesByProduct[pid] = [];
-        imagesByProduct[pid].push(url);
-      }
-    }
-  }
-
-  // 3) Map to UI shape
   const products = productsDb
     .map((p) => {
-      const gallery = (imagesByProduct[p.id] || []).filter(Boolean);
-      const main = normalizeImageUrl(p.image_url) || gallery[0] || undefined;
-      // Avoid duplicates (main image already in gallery)
-      const images = gallery.filter((u) => !main || u !== main);
+      const main = normalizeImageUrl(p.image_url) || undefined;
 
       return {
         id: p.id,
@@ -103,9 +76,11 @@ export async function GET() {
         casePack: p.case_pack ? String(p.case_pack) : "",
         moq: p.moq ? String(p.moq) : "",
         notes: String(p.description ?? p.notes ?? ""),
-        image: main || "/products/placeholder.svg", // what UI expects
-        images, // additional images for modal gallery
+        // what UI expects:
+        image: main || "/products/placeholder.svg",
         image_url: main || undefined,
+        // no multi-image gallery in this reset version
+        images: undefined as undefined,
       };
     })
     .filter((p) => p.sku && p.name);

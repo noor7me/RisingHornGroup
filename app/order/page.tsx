@@ -377,8 +377,8 @@ const filtered = useMemo(() => {
         <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
           {filtered.map((p) => {
             const desc = (((p as any).description ?? p.notes ?? "") as string).trim();
-            const imgSrc = toProductImageSrc((p as any).imageUrl ?? (p as any).image_url ?? (p as any).image);
-return (
+            const imgSrc = toProductImageSrc((p as any).imageUrl ?? (p as any).image_url);
+            return (
               <div key={p.sku} className="card productCard">
                 <button
                   type="button"
