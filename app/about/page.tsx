@@ -5,21 +5,19 @@ export default function AboutPage() {
     <main className="container">
       <h1 className="h1">About</h1>
 
-      <Section title="Company Profile" subtitle="Import • Export • Distribution via our UAE operations">
+      <Section title="Company Profile" subtitle="International trading • Registered in the United States • Operations in the UAE">
         <div className="card rhgAbout">
           <div className="rhgSplit">
             <div className="rhgProse">
               <p className="rhgLead">
-                RisingHorn Group is an international trading company operating through the United Arab Emirates,
-                specializing in sourcing and distributing high-demand consumer goods, snacks, packaged foods, and
-                specialty products.
+                RisingHorn Group is an international trading company registered in the United States, with active operations in the United Arab Emirates (UAE). We specialize in sourcing and distributing high-demand consumer goods, snacks, packaged foods, and specialty products through our UAE hub.
               </p>
 
               <section>
                 <h3>Products &amp; Services</h3>
                 <ul>
-                  <li>Importing and supplying popular consumer goods from global sourcing markets.</li>
-                  <li>Wholesale distribution support for retailers, supermarkets, and local wholesalers.</li>
+                  <li>Importing and supplying popular consumer goods from international markets.</li>
+                  <li>Wholesale distribution to retailers, supermarkets, and local wholesalers.</li>
                   <li>Export coordination and logistics support for bulk shipments.</li>
                   <li>Private sourcing requests and supply chain support for clients.</li>
                 </ul>
@@ -47,13 +45,14 @@ export default function AboutPage() {
                 <h3>Why Choose RisingHorn Group</h3>
                 <ul>
                   <li>
-                    <b>UAE-based operations:</b> structured procurement, consolidation, and shipment planning.
+                    <b>Market Insight:</b> deep understanding of product demand trends and fast-moving categories for the
+                    UAE market.
                   </li>
                   <li>
-                    <b>Trusted Supply Chain:</b> partnerships with dependable exporters and authorized distributors.
+                    <b>Trusted Supply Chain:</b> partnerships with dependable exporters and suppliers.
                   </li>
                   <li>
-                    <b>Efficient Logistics:</b> shipment-ready case packs, clear labeling, and delivery coordination.
+                    <b>Efficient Logistics:</b> streamlined shipping and distribution networks.
                   </li>
                   <li>
                     <b>Customer Focus:</b> customized sourcing and flexible order options for clients.
@@ -72,10 +71,9 @@ export default function AboutPage() {
               </div>
 
               <div className="rhgAsideCard">
-                <h3>Operations</h3>
+                <h3>Markets Served</h3>
                 <p>
-                  Our trading operations are based in the UAE. The U.S. entity works directly with the UAE operation for
-                  procurement and fulfillment.
+                  Our operations and distribution focus on the UAE. The company is registered in the United States.
                 </p>
               </div>
 

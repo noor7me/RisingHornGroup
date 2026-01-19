@@ -23,9 +23,8 @@ export default function HomePage() {
               <div className="homeKicker">Rising Horn Group</div>
               <h1 className="homeTitle">Import • Export • Distribution</h1>
               <p className="homeSub">
-                We connect reliable international suppliers through our UAE hub and across East African markets —
-                helping retailers and wholesalers source fast-moving products, with clear packaging and
-                dependable logistics.
+                Registered in the United States with operations in the UAE, we connect reliable international suppliers through our UAE hub — helping retailers and
+                wholesalers source fast-moving products, with clear packaging and dependable logistics.
               </p>
 
               <div className="homeCtas">
