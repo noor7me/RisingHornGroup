@@ -4,7 +4,7 @@ import Footer from "../components/Footer";
 
 export const metadata = {
   title: "RisingHorn Group",
-  description: "International trading company focused on food and consumer products for Somali and East African markets."
+  description: "International trading company focused on food and consumer products through the UAE, focused on food and consumer products for East Africa."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -5,21 +5,21 @@ export default function AboutPage() {
     <main className="container">
       <h1 className="h1">About</h1>
 
-      <Section title="Company Profile" subtitle="Import • Export • Distribution for Somali & East African markets">
+      <Section title="Company Profile" subtitle="Import • Export • Distribution via our UAE operations">
         <div className="card rhgAbout">
           <div className="rhgSplit">
             <div className="rhgProse">
               <p className="rhgLead">
-                RisingHorn Group is a dynamic import and export company specializing in the sourcing and distribution of
-                high-demand consumer goods, snacks, packaged foods, and specialty products for Somali and East African
-                markets.
+                RisingHorn Group is an international trading company operating through the United Arab Emirates,
+                specializing in sourcing and distributing high-demand consumer goods, snacks, packaged foods, and
+                specialty products.
               </p>
 
               <section>
                 <h3>Products &amp; Services</h3>
                 <ul>
-                  <li>Importing and supplying popular consumer goods from international markets.</li>
-                  <li>Wholesale distribution to retailers, supermarkets, and local wholesalers.</li>
+                  <li>Importing and supplying popular consumer goods from global sourcing markets.</li>
+                  <li>Wholesale distribution support for retailers, supermarkets, and local wholesalers.</li>
                   <li>Export coordination and logistics support for bulk shipments.</li>
                   <li>Private sourcing requests and supply chain support for clients.</li>
                 </ul>
@@ -47,14 +47,13 @@ export default function AboutPage() {
                 <h3>Why Choose RisingHorn Group</h3>
                 <ul>
                   <li>
-                    <b>Market Insight:</b> deep understanding of product demand trends in Somali and East African
-                    communities.
+                    <b>UAE-based operations:</b> structured procurement, consolidation, and shipment planning.
                   </li>
                   <li>
-                    <b>Trusted Supply Chain:</b> partnerships with dependable exporters and suppliers.
+                    <b>Trusted Supply Chain:</b> partnerships with dependable exporters and authorized distributors.
                   </li>
                   <li>
-                    <b>Efficient Logistics:</b> streamlined shipping and distribution networks.
+                    <b>Efficient Logistics:</b> shipment-ready case packs, clear labeling, and delivery coordination.
                   </li>
                   <li>
                     <b>Customer Focus:</b> customized sourcing and flexible order options for clients.
@@ -73,10 +72,10 @@ export default function AboutPage() {
               </div>
 
               <div className="rhgAsideCard">
-                <h3>Markets Served</h3>
+                <h3>Operations</h3>
                 <p>
-                  Primary operations focus on Somalia, with expansion plans across East African regions and diaspora
-                  supply channels.
+                  Our trading operations are based in the UAE. The U.S. entity works directly with the UAE operation for
+                  procurement and fulfillment.
                 </p>
               </div>
 

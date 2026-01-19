@@ -10,7 +10,7 @@ export default function Footer() {
           <div>
             <div className="footerTitle">RisingHorn Group</div>
             <div className="p footerBlurb">
-              Import • Export • Distribution for Somali & East African markets.
+              Import • Export • Distribution via our UAE hub for East African markets.
             </div>
           </div>
 
