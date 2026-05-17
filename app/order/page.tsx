@@ -242,10 +242,12 @@ export default function OrderPage() {
       <header className="pageHeader">
         <p className="eyebrow">Order request</p>
         <h1 className="pageTitle">Build a wholesale inquiry</h1>
-        <p className="lead">
-          Select products, enter carton quantities, and send a focused request. We will confirm
-          availability, pricing, and delivery options before any order is finalized.
-        </p>
+        <div className="heroPoints">
+          <span>Select products</span>
+          <span>Add carton quantities</span>
+          <span>Send inquiry</span>
+          <span>Confirm availability</span>
+        </div>
         <div className="catalogSummary">
           <div className="catalogStat">
             <div className="catalogStatValue">{products.length}</div>
@@ -335,8 +337,8 @@ export default function OrderPage() {
                         ) : null}
                       </div>
                       <div className="orderAddRow">
-                        <label className="fieldLabel" style={{ maxWidth: 140 }}>
-                          Qty cartons
+                        <label className="qtyControl">
+                          <span>Qty cartons</span>
                           <input
                             className="textInput"
                             inputMode="numeric"
@@ -418,8 +420,8 @@ export default function OrderPage() {
             </label>
 
             <div className="formActions">
-              <button type="button" className="button secondary" onClick={downloadPdf} disabled={cart.length === 0}>
-                Download PDF
+              <button type="submit" className="button" disabled={status === "sending" || cart.length === 0}>
+                Send Request
               </button>
               <button
                 type="button"
@@ -427,10 +429,10 @@ export default function OrderPage() {
                 onClick={(e) => submit(e as unknown as React.FormEvent, false)}
                 disabled={status === "sending" || cart.length === 0}
               >
-                Email Only
+                Send Without PDF
               </button>
-              <button type="submit" className="button" disabled={status === "sending" || cart.length === 0}>
-                Send with PDF
+              <button type="button" className="button ghost" onClick={downloadPdf} disabled={cart.length === 0}>
+                Download PDF
               </button>
             </div>
 

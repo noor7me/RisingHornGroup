@@ -48,11 +48,13 @@ export default function ContactPage() {
     <>
       <header className="pageHeader">
         <p className="eyebrow">Contact</p>
-        <h1 className="pageTitle">Talk to RisingHorn Group</h1>
-        <p className="lead">
-          Send an order inquiry, supplier introduction, or general message. We typically respond
-          within 1 to 2 business days.
-        </p>
+        <h1 className="pageTitle">Contact sales</h1>
+        <div className="heroPoints">
+          <span>Orders</span>
+          <span>Supplier introductions</span>
+          <span>General questions</span>
+          <span>1-2 business day response</span>
+        </div>
       </header>
 
       <Section title="Direct contact">
@@ -100,9 +102,7 @@ export default function ContactPage() {
           <form className="card formStack" onSubmit={onSubmit}>
             <div>
               <h2 className="cardTitle">Send a message</h2>
-              <p className="muted">
-                Choose the inquiry type so your message goes to the right inbox.
-              </p>
+              <div className="miniLine">Choose type. Add details. Submit.</div>
             </div>
 
             <label className="fieldLabel">
