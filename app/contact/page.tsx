@@ -4,17 +4,6 @@ import { useState } from "react";
 import Section from "../../components/Section";
 import { CONTACT } from "@/lib/contact";
 
-function WhatsAppIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style={{ marginRight: 8 }}>
-      <path
-        fill="currentColor"
-        d="M20 3H4a2 2 0 0 0-2 2v16l4-4h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"
-      />
-    </svg>
-  );
-}
-
 export default function ContactPage() {
   const { emails, whatsapp } = CONTACT;
 
@@ -33,7 +22,13 @@ export default function ContactPage() {
       const r = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email: email || undefined, phone: phone || undefined, message: msg, inquiryType }),
+        body: JSON.stringify({
+          name,
+          email: email || undefined,
+          phone: phone || undefined,
+          message: msg,
+          inquiryType,
+        }),
       });
 
       if (!r.ok) throw new Error("Request failed");
@@ -51,107 +46,108 @@ export default function ContactPage() {
 
   return (
     <>
-      <Section title="Contact">
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Left: direct contact */}
-          <div className="card">
-            <h3 className="h3">Email</h3>
+      <header className="pageHeader">
+        <p className="eyebrow">Contact</p>
+        <h1 className="pageTitle">Talk to RisingHorn Group</h1>
+        <p className="lead">
+          Send an order inquiry, supplier introduction, or general message. We typically respond
+          within 1 to 2 business days.
+        </p>
+      </header>
 
-            <div className="mt-4 space-y-3">
-              <div>
-                <div className="font-semibold">Customers & Orders</div>
-                <a className="underline" href={`mailto:${emails.orders}`}>
-                  {emails.orders}
-                </a>
-              </div>
-
-              <div>
-                <div className="font-semibold">Suppliers & Partnerships</div>
-                <a className="underline" href={`mailto:${emails.sales}`}>
-                  {emails.sales}
-                </a>
-              </div>
-
-              <div>
-                <div className="font-semibold">General Inquiries</div>
-                <a className="underline" href={`mailto:${emails.info}`}>
-                  {emails.info}
-                </a>
-              </div>
+      <Section title="Direct contact">
+        <div className="contactGrid">
+          <div className="card contactStack">
+            <div className="contactMethod">
+              <div className="contactLabel">Customers and orders</div>
+              <a className="underline" href={`mailto:${emails.orders}`}>
+                {emails.orders}
+              </a>
             </div>
 
-            <h3 className="h3 mt-8">WhatsApp</h3>
-            <ul className="mt-3 space-y-2">
-              {whatsapp.map((w) => (
-                <li key={w.e164}>
+            <div className="contactMethod">
+              <div className="contactLabel">Suppliers and partnerships</div>
+              <a className="underline" href={`mailto:${emails.sales}`}>
+                {emails.sales}
+              </a>
+            </div>
+
+            <div className="contactMethod">
+              <div className="contactLabel">General inquiries</div>
+              <a className="underline" href={`mailto:${emails.info}`}>
+                {emails.info}
+              </a>
+            </div>
+
+            <div className="contactMethod">
+              <div className="contactLabel">WhatsApp</div>
+              <div className="contactStack">
+                {whatsapp.map((w) => (
                   <a
-                    className="inline-flex items-center underline"
+                    key={w.e164}
+                    className="button secondary"
                     href={`https://wa.me/${w.e164}`}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <WhatsAppIcon />
                     {w.label}
                   </a>
-                </li>
-              ))}
-            </ul>
-
-            <p className="p mt-6">
-              We typically respond within 1–2 business days.
-            </p>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Right: contact form */}
-          <div className="card">
-            <h3 className="h3">Send a Message</h3>
-            <p className="p">
-              Use this form for quick questions. For orders, we recommend emailing{" "}
-              <a className="underline" href={`mailto:${emails.orders}`}>
-                {emails.orders}
-              </a>
-              .
-            </p>
+          <form className="card formStack" onSubmit={onSubmit}>
+            <div>
+              <h2 className="cardTitle">Send a message</h2>
+              <p className="muted">
+                Choose the inquiry type so your message goes to the right inbox.
+              </p>
+            </div>
 
-            <form className="mt-4 space-y-3" onSubmit={onSubmit}>
-              <input
+            <label className="fieldLabel">
+              Inquiry type
+              <select
                 className="input"
-                type="text"
-                placeholder="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-              <input
-                className="input"
-                type="tel"
-                placeholder="Phone (optional)"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-              <input
-                className="input"
-                type="email"
-                placeholder="Email (optional)"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <textarea
-                className="input"
-                placeholder="Message"
-                rows={6}
-                value={msg}
-                onChange={(e) => setMsg(e.target.value)}
-                required
-              />
+                value={inquiryType}
+                onChange={(e) => setInquiryType(e.target.value as "general" | "orders" | "sales")}
+              >
+                <option value="general">General inquiry</option>
+                <option value="orders">Customer or order inquiry</option>
+                <option value="sales">Supplier or partnership inquiry</option>
+              </select>
+            </label>
+
+            <label className="fieldLabel">
+              Name
+              <input className="input" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+            </label>
+
+            <div className="grid2">
+              <label className="fieldLabel">
+                Phone
+                <input className="input" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              </label>
+              <label className="fieldLabel">
+                Email
+                <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </label>
+            </div>
+
+            <label className="fieldLabel">
+              Message
+              <textarea className="textarea" value={msg} onChange={(e) => setMsg(e.target.value)} required />
+            </label>
+
+            <div className="formActions">
               <button className="button" type="submit" disabled={status === "sending"}>
-                {status === "sending" ? "Sending..." : "Submit"}
+                {status === "sending" ? "Sending..." : "Submit Message"}
               </button>
+            </div>
 
-              {status === "sent" && <p className="p">Message received. We’ll respond soon.</p>}
-              {status === "error" && <p className="p">Something went wrong. Please try again.</p>}
-            </form>
-          </div>
+            {status === "sent" ? <p className="muted">Message received. We will respond soon.</p> : null}
+            {status === "error" ? <p className="muted">Something went wrong. Please try again or email us directly.</p> : null}
+          </form>
         </div>
       </Section>
     </>

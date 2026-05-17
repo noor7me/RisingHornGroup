@@ -9,34 +9,32 @@ export default function Footer() {
         <div className="footerGrid">
           <div>
             <div className="footerTitle">RisingHorn Group</div>
-            <div className="p footerBlurb">
-              Registered in the United States • Operations in the UAE.
-            </div>
+            <p className="footerBlurb">
+              Registered in the United States with operations in the UAE. Import, export, sourcing,
+              and wholesale distribution support for food and consumer products.
+            </p>
           </div>
 
           <div>
             <div className="footerTitle">Email</div>
-
-            <div className="p footerLine">
-              <span className="footerLabel">General:</span>{" "}
-              <a className="footerLink" href={`mailto:${emails.info}`}>
-                {emails.info}
-              </a>
-            </div>
-
-            <div className="p footerLine">
-              <span className="footerLabel">Orders:</span>{" "}
+            <p className="footerLine">
+              Orders:{" "}
               <a className="footerLink" href={`mailto:${emails.orders}`}>
                 {emails.orders}
               </a>
-            </div>
-
-            <div className="p footerLine">
-              <span className="footerLabel">Sales:</span>{" "}
+            </p>
+            <p className="footerLine">
+              Sales:{" "}
               <a className="footerLink" href={`mailto:${emails.sales}`}>
                 {emails.sales}
               </a>
-            </div>
+            </p>
+            <p className="footerLine">
+              General:{" "}
+              <a className="footerLink" href={`mailto:${emails.info}`}>
+                {emails.info}
+              </a>
+            </p>
           </div>
 
           <div>
@@ -50,19 +48,17 @@ export default function Footer() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <span className="footerWAIcon" aria-hidden>
-                    📱
-                  </span>
-                  <span className="footerWAText">{w.label}</span>
+                  <span aria-hidden>WA</span>
+                  <span>{w.label}</span>
                 </a>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="p footerCopyright">
-          © {new Date().getFullYear()} RisingHorn Group. All rights reserved.
-        </div>
+        <p className="footerCopyright">
+          Copyright {new Date().getFullYear()} RisingHorn Group. All rights reserved.
+        </p>
       </div>
     </footer>
   );

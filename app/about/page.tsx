@@ -2,61 +2,53 @@ import Section from "../../components/Section";
 
 export default function AboutPage() {
   return (
-    <main className="container">
-      <h1 className="h1">About</h1>
+    <>
+      <header className="pageHeader">
+        <p className="eyebrow">Company profile</p>
+        <h1 className="pageTitle">International trade with a practical UAE focus</h1>
+        <p className="lead">
+          RisingHorn Group is registered in the United States and operates with a UAE-focused
+          sourcing and distribution model for high-demand food and consumer products.
+        </p>
+      </header>
 
-      <Section title="Company Profile" subtitle="International trading • Registered in the United States • Operations in the UAE">
+      <Section title="What we do">
         <div className="card rhgAbout">
           <div className="rhgSplit">
             <div className="rhgProse">
               <p className="rhgLead">
-                RisingHorn Group is an international trading company registered in the United States, with active operations in the United Arab Emirates (UAE). We specialize in sourcing and distributing high-demand consumer goods, snacks, packaged foods, and specialty products through our UAE hub.
+                We help buyers, retailers, wholesalers, and partners identify products that can move
+                well in market, then organize product details, case packs, order requests, and
+                supplier communication into a clearer trade workflow.
               </p>
 
               <section>
-                <h3>Products &amp; Services</h3>
+                <h3>Products and services</h3>
                 <ul>
                   <li>Importing and supplying popular consumer goods from international markets.</li>
-                  <li>Wholesale distribution to retailers, supermarkets, and local wholesalers.</li>
+                  <li>Wholesale distribution support for retailers, supermarkets, and local wholesalers.</li>
                   <li>Export coordination and logistics support for bulk shipments.</li>
-                  <li>Private sourcing requests and supply chain support for clients.</li>
+                  <li>Private sourcing requests for clients with specific category needs.</li>
                 </ul>
               </section>
 
               <section>
-                <h3>Core Product Categories</h3>
+                <h3>Core product categories</h3>
                 <ul>
-                  <li>
-                    <b>Snacks &amp; Confectionery:</b> chips, candy, gum, chocolate, and packaged snacks.
-                  </li>
-                  <li>
-                    <b>Beverages &amp; Drink Mixes:</b> flavored drinks, powdered beverages, energy drinks, and juices.
-                  </li>
-                  <li>
-                    <b>Packaged &amp; Dry Foods:</b> noodles, seasonings, spices, canned products, and staple food items.
-                  </li>
-                  <li>
-                    <b>Household &amp; Personal Care:</b> select hygiene and household essentials based on market demand.
-                  </li>
+                  <li><b>Snacks and confectionery:</b> chips, candy, gum, chocolate, and packaged snacks.</li>
+                  <li><b>Beverages and drink mixes:</b> flavored drinks, powdered beverages, energy drinks, and juices.</li>
+                  <li><b>Packaged and dry foods:</b> noodles, seasonings, spices, canned products, and staple food items.</li>
+                  <li><b>Household and personal care:</b> selected essentials based on market demand.</li>
                 </ul>
               </section>
 
               <section>
-                <h3>Why Choose RisingHorn Group</h3>
+                <h3>Why buyers work with us</h3>
                 <ul>
-                  <li>
-                    <b>Market Insight:</b> deep understanding of product demand trends and fast-moving categories for the
-                    UAE market.
-                  </li>
-                  <li>
-                    <b>Trusted Supply Chain:</b> partnerships with dependable exporters and suppliers.
-                  </li>
-                  <li>
-                    <b>Efficient Logistics:</b> streamlined shipping and distribution networks.
-                  </li>
-                  <li>
-                    <b>Customer Focus:</b> customized sourcing and flexible order options for clients.
-                  </li>
+                  <li><b>Market fit:</b> attention to fast-moving categories and retail-friendly packaging.</li>
+                  <li><b>Supplier coordination:</b> communication around availability, case packs, and order details.</li>
+                  <li><b>Logistics awareness:</b> practical support for shipment and distribution requirements.</li>
+                  <li><b>Clear follow-up:</b> simple inquiry flows through catalog, email, and WhatsApp.</li>
                 </ul>
               </section>
             </div>
@@ -65,28 +57,30 @@ export default function AboutPage() {
               <div className="rhgAsideCard">
                 <h3>Mission</h3>
                 <p>
-                  To provide reliable, high-quality imported products at competitive prices while ensuring efficient
-                  logistics and strong supplier relationships.
+                  To provide reliable access to imported products while keeping communication,
+                  sourcing, and logistics coordination straightforward for trade partners.
                 </p>
               </div>
 
               <div className="rhgAsideCard">
-                <h3>Markets Served</h3>
+                <h3>Markets served</h3>
                 <p>
-                  Our operations and distribution focus on the UAE. The company is registered in the United States.
+                  Operations and distribution focus on the UAE, with company registration in the
+                  United States.
                 </p>
               </div>
 
               <div className="rhgAsideCard">
-                <h3>Contact</h3>
-                <p style={{ marginBottom: 0 }}>
-                  For product inquiries, partnership opportunities, or wholesale orders, please contact RisingHorn Group.
+                <h3>Best next step</h3>
+                <p>
+                  Browse the catalog or send a request with product categories, target quantity, and
+                  destination details.
                 </p>
               </div>
             </aside>
           </div>
         </div>
       </Section>
-    </main>
+    </>
   );
 }

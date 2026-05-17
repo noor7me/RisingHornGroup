@@ -27,7 +27,7 @@ function pickRecipient(inquiryType: Payload["inquiryType"]) {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.RESEND_API_KEY;
-    const from = process.env.RESEND_FROM; // e.g. "RisingHorn Website <[email protected]>"
+    const from = process.env.RESEND_FROM;
     if (!apiKey) {
       return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
     }
@@ -46,17 +46,18 @@ export async function POST(req: Request) {
     if (!message || message.length < 5) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
-    // basic sanity limits
     if (name.length > 120 || email.length > 200 || phone.length > 60 || message.length > 8000) {
       return NextResponse.json({ error: "Input too long." }, { status: 400 });
     }
 
     const to = pickRecipient(inquiryType);
-
     const resend = new Resend(apiKey);
-
     const subjectPrefix =
-      inquiryType === "orders" ? "Order Inquiry" : inquiryType === "sales" ? "Supplier/Partnership Inquiry" : "Website Contact";
+      inquiryType === "orders"
+        ? "Order Inquiry"
+        : inquiryType === "sales"
+          ? "Supplier/Partnership Inquiry"
+          : "Website Contact";
 
     const html = `
       <div style="font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial;line-height:1.4">
@@ -82,7 +83,7 @@ export async function POST(req: Request) {
     const { error } = await resend.emails.send({
       from,
       to: [to],
-      subject: `${subjectPrefix} — RisingHorn.com`,
+      subject: `${subjectPrefix} - RisingHorn.com`,
       replyTo: email || undefined,
       html,
       attachments,
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Bad request." }, { status: 400 });
   }
 }

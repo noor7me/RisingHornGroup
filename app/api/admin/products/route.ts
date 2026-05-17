@@ -168,7 +168,15 @@ export async function DELETE(request: Request) {
   }
 
   const url = new URL(request.url);
-  const id = url.searchParams.get("id");
+  let id = url.searchParams.get("id");
+  if (!id) {
+    try {
+      const body = (await request.json()) as { id?: string };
+      id = body.id || null;
+    } catch {
+      // ignore malformed or empty bodies
+    }
+  }
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
   const { error } = await svc.from("products").delete().eq("id", id);

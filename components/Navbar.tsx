@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 const nav = [
   { href: "/about", label: "About" },
   { href: "/products", label: "Products" },
-  { href: "/order", label: "Order" },
+  { href: "/order", label: "Request Order" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -76,6 +76,9 @@ export default function Navbar() {
               </Link>
             );
           })}
+          <Link href="/order" className="button navCta">
+            Start Request
+          </Link>
         </nav>
       </div>
     </header>

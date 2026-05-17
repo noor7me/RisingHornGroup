@@ -16,29 +16,8 @@ function waLink(e164: string) {
   return `https://wa.me/${e164}`;
 }
 
-// Normalize product image URLs so images display correctly in the product cards.
-function toProductImageSrc(imageUrl?: string | null): string {
-  if (!imageUrl) return "/products/placeholder.svg";
-  const url = String(imageUrl).trim();
-  if (!url) return "/products/placeholder.svg";
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-
-  // If the DB stores a Storage path, build the public URL.
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const cleaned = url.replace(/^\/+/, "");
-  const looksLikeStoragePath =
-    cleaned.startsWith("product-images/") ||
-    cleaned.startsWith("public/product-images/") ||
-    cleaned.includes("/storage/v1/object/public/");
-
-  if (base && looksLikeStoragePath && !cleaned.includes("/storage/v1/object/public/")) {
-    // Accept both `product-images/x.png` and `public/product-images/x.png`
-    const storagePath = cleaned.startsWith("public/") ? cleaned : `public/${cleaned}`;
-    return `${base.replace(/\/$/, "")}/storage/v1/object/${storagePath}`;
-  }
-
-  // Site-relative path
-  return url.startsWith("/") ? url : `/${url}`;
+function productImage(p?: Product | null) {
+  return p?.image_url || p?.image || "/products/placeholder.svg";
 }
 
 function safeNum(value: string) {
@@ -46,18 +25,21 @@ function safeNum(value: string) {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-function buildOrderText(args: {
-  cart: CartItem[];
-  name: string;
-  company: string;
-  phone: string;
-  email: string;
-  notes: string;
-}, productsList: Product[]) {
+function buildOrderText(
+  args: {
+    cart: CartItem[];
+    name: string;
+    company: string;
+    phone: string;
+    email: string;
+    notes: string;
+  },
+  productsList: Product[]
+) {
   const { cart, name, company, phone, email, notes } = args;
-
   const lines: string[] = [];
-  lines.push("Order request");
+
+  lines.push("RisingHorn Group order request");
   lines.push(`Company: ${company || "(not provided)"}`);
   lines.push(`Name: ${name || "(not provided)"}`);
   lines.push(`Phone: ${phone || "(not provided)"}`);
@@ -71,10 +53,9 @@ function buildOrderText(args: {
     lines.push(`- ${p.name} (SKU: ${p.sku})`);
     lines.push(`  Quantity: ${item.qty} cartons`);
     if (p.size) lines.push(`  Size: ${p.size}`);
-    if (p.casePack) lines.push(`  Case: ${p.casePack}`);
+    if (p.casePack) lines.push(`  Case pack: ${p.casePack}`);
     if (p.moq) lines.push(`  MOQ: ${p.moq}`);
     if (p.origin) lines.push(`  Origin: ${p.origin}`);
-    lines.push("  ---");
   }
 
   if (notes) {
@@ -82,6 +63,7 @@ function buildOrderText(args: {
     lines.push("Notes:");
     lines.push(notes);
   }
+
   return lines.join("\n");
 }
 
@@ -95,39 +77,47 @@ function arrayBufferToBase64(buf: ArrayBuffer) {
   return btoa(binary);
 }
 
-function makePdf(args: {
-  cart: CartItem[];
-  name: string;
-  company: string;
-  phone: string;
-  email: string;
-  notes: string;
-}, productsForText: Product[]) {
+function makePdf(
+  args: {
+    cart: CartItem[];
+    name: string;
+    company: string;
+    phone: string;
+    email: string;
+    notes: string;
+  },
+  productsForText: Product[]
+) {
   const orderText = buildOrderText(args, productsForText);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("RisingHorn Group — Order Request", 40, 50);
+  doc.text("RisingHorn Group - Order Request", 40, 50);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text(`Date: ${new Date().toLocaleString()}`, 40, 70);
-  doc.text(`Website: risinghorn.com`, 40, 86);
+  doc.text(`Date: ${new Date().toLocaleString()}`, 40, 72);
+  doc.text("Website: risinghorn.com", 40, 88);
 
   const body = doc.splitTextToSize(orderText, 515);
-  doc.text(body, 40, 120);
-
+  doc.text(body, 40, 124);
   return doc;
 }
 
 export default function OrderPage() {
   const [products, setProducts] = useState<Product[]>(PRODUCTS);
-  const viewProducts = products && products.length ? products : PRODUCTS;
-  const productsList = viewProducts;
-
-  // Product details modal (opened when the user taps an image/description)
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
-  const [activeImage, setActiveImage] = useState<string>("");
+  const [query, setQuery] = useState("");
+  const [pickerSku, setPickerSku] = useState(PRODUCTS[0]?.sku || "");
+  const [pickerQty, setPickerQty] = useState("1");
+  const [qtyBySku, setQtyBySku] = useState<Record<string, string>>({});
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [name, setName] = useState("");
+  const [company, setCompany] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [notes, setNotes] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   useEffect(() => {
     let cancelled = false;
@@ -144,51 +134,33 @@ export default function OrderPage() {
     };
   }, []);
 
-// When the product details modal opens, default to the main image.
-useEffect(() => {
-  if (!activeProduct) return;
-  const main = (activeProduct.image_url || activeProduct.image || "").toString();
-  const extras = Array.isArray(activeProduct.images) ? activeProduct.images : [];
-  const all = [main, ...extras].filter(Boolean);
-  setActiveImage(all[0] || "");
-}, [activeProduct]);
-
-
-
-const [query, setQuery] = useState("");
-  const [pickerSku, setPickerSku] = useState("");
-  const [pickerQty, setPickerQty] = useState("1");
+  useEffect(() => {
+    if (!products.length) return;
+    setPickerSku((current) => current || products[0].sku);
+  }, [products]);
 
   useEffect(() => {
-    if (!pickerSku) {
-      const first = products[0]?.sku || "";
-      if (first) setPickerSku(first);
+    if (typeof window === "undefined") return;
+    const sku = new URLSearchParams(window.location.search).get("sku");
+    if (sku) {
+      setPickerSku(sku);
+      setCart((prev) => (prev.some((item) => item.sku === sku) ? prev : [...prev, { sku, qty: "1" }]));
     }
-  }, [products, pickerSku]);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  }, []);
 
-    const [qtyBySku, setQtyBySku] = useState<Record<string, string>>({});
-const [name, setName] = useState("");
-  const [company, setCompany] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [notes, setNotes] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-
-  
-  const [quickAddQty, setQuickAddQty] = useState<number>(1);
-  const [selectedSku, setSelectedSku] = useState<string>("");
-const filtered = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return viewProducts;
-    return viewProducts.filter((p) =>
-      [p.sku, p.name, p.category, p.brand, p.origin].filter(Boolean).join(" ").toLowerCase().includes(q)
+    if (!q) return products;
+    return products.filter((p) =>
+      [p.sku, p.name, p.category, p.brand, p.origin, p.notes].filter(Boolean).join(" ").toLowerCase().includes(q)
     );
-  }, [query, viewProducts]);
+  }, [products, query]);
 
   const cartonTotal = useMemo(() => cart.reduce((sum, i) => sum + safeNum(i.qty), 0), [cart]);
 
   function addToCart(sku: string, qty: string = "1") {
+    if (!sku) return;
+    setStatus("idle");
     setCart((prev) => {
       const existing = prev.find((x) => x.sku === sku);
       if (existing) {
@@ -196,7 +168,7 @@ const filtered = useMemo(() => {
           x.sku === sku ? { ...x, qty: String(safeNum(x.qty) + safeNum(qty) || 1) } : x
         );
       }
-      return [...prev, { sku, qty: qty || "1" }];
+      return [...prev, { sku, qty: String(safeNum(qty) || 1) }];
     });
   }
 
@@ -209,8 +181,6 @@ const filtered = useMemo(() => {
   }
 
   function resetForm() {
-    setQuery("");
-    setPickerQty("1");
     setCart([]);
     setName("");
     setCompany("");
@@ -231,17 +201,16 @@ const filtered = useMemo(() => {
       setStatus("error");
       return;
     }
+
     try {
       setStatus("sending");
-
       const message = buildOrderText({ cart, name, company, phone, email, notes }, products);
 
       let pdfBase64: string | undefined;
       let pdfFilename: string | undefined;
       if (attachPdf) {
         const doc = makePdf({ cart, name, company, phone, email, notes }, products);
-        const buf = doc.output("arraybuffer");
-        pdfBase64 = arrayBufferToBase64(buf);
+        pdfBase64 = arrayBufferToBase64(doc.output("arraybuffer"));
         pdfFilename = `RHG-Order-${new Date().toISOString().slice(0, 10)}.pdf`;
       }
 
@@ -270,233 +239,206 @@ const filtered = useMemo(() => {
 
   return (
     <>
-      <h1 className="h1">Order</h1>
-      <p className="p">View currently available products and place an order request.</p>
-
-      <Section title="Order Contact">
-        <div className="card" style={{ marginBottom: 14 }}>
-          <p className="p" style={{ margin: 0 }}>
-            For availability and orders, email{" "}
-            <a className="underline" href={`mailto:${CONTACT.emails.orders}`}>
-              {CONTACT.emails.orders}
-            </a>
-            {" "}or contact us on WhatsApp.
-          </p>
-          <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 10 }}>
-            {CONTACT.whatsapp.map((w) => (
-              <a
-                key={w.e164}
-                className="button"
-                href={waLink(w.e164)}
-                target="_blank"
-                rel="noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-              >
-                <span aria-hidden>📱</span> {w.label}
-              </a>
-            ))}
+      <header className="pageHeader">
+        <p className="eyebrow">Order request</p>
+        <h1 className="pageTitle">Build a wholesale inquiry</h1>
+        <p className="lead">
+          Select products, enter carton quantities, and send a focused request. We will confirm
+          availability, pricing, and delivery options before any order is finalized.
+        </p>
+        <div className="catalogSummary">
+          <div className="catalogStat">
+            <div className="catalogStatValue">{products.length}</div>
+            <div className="catalogStatLabel">Products loaded</div>
+          </div>
+          <div className="catalogStat">
+            <div className="catalogStatValue">{cart.length}</div>
+            <div className="catalogStatLabel">Selected SKUs</div>
+          </div>
+          <div className="catalogStat">
+            <div className="catalogStatValue">{cartonTotal}</div>
+            <div className="catalogStatLabel">Cartons requested</div>
           </div>
         </div>
-      </Section>
+        <div className="pageActions" style={{ marginTop: 18 }}>
+          {CONTACT.whatsapp.map((w) => (
+            <a key={w.e164} className="button secondary" href={waLink(w.e164)} target="_blank" rel="noreferrer">
+              WhatsApp {w.label}
+            </a>
+          ))}
+          <a className="button secondary" href={`mailto:${CONTACT.emails.orders}`}>
+            Email Orders
+          </a>
+        </div>
+      </header>
 
-      <Section title="Available Products">
-        {/*
-          Mobile fix: these controls must stack on small screens.
-          Inline grid columns can cause the <select value={selectedSku} onChange={(e) => setSelectedSku(e.target.value)}> to collapse/clip on mobile.
-        */}
-        <div className="orderTopControls">
-          <input
-            className="input"
-            placeholder="Search products (SKU, name, category...)"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <div className="orderPicker">
-            <select className="input orderPickerSelect" value={pickerSku} onChange={(e) => setPickerSku(e.target.value)}>
-              {products.map((p) => (
-                <option key={p.sku} value={p.sku}>
-                  {p.sku} — {p.name}
-                </option>
-              ))}
-            </select>
-            <div className="orderPickerActions">
+      <div className="orderShell">
+        <div>
+          <Section title="Choose products">
+            <div className="orderTopControls">
               <input
                 className="input"
-                placeholder="Qty"
-                value={pickerQty}
-                onChange={(e) => setPickerQty(e.target.value)}
+                placeholder="Search products by SKU, name, category..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
               />
-              <button type="button" className="button" onClick={() => addToCart(pickerSku, pickerQty)}>
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {cart.length > 0 && (
-          <div className="card" style={{ marginTop: 14 }}>
-            <div className="cartTotals">
-              <div style={{ fontWeight: 900 }}>Selected items</div>
-              <div style={{ fontWeight: 800 }}>
-                Total cartons: <span style={{ fontWeight: 900 }}>{cartonTotal}</span>
+              <div className="orderPicker">
+                <select className="input" value={pickerSku} onChange={(e) => setPickerSku(e.target.value)}>
+                  {products.map((p) => (
+                    <option key={p.sku} value={p.sku}>
+                      {p.sku} - {p.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="orderPickerActions">
+                  <input
+                    className="input"
+                    placeholder="Qty"
+                    inputMode="numeric"
+                    value={pickerQty}
+                    onChange={(e) => setPickerQty(e.target.value)}
+                  />
+                  <button type="button" className="button" onClick={() => addToCart(pickerSku, pickerQty)}>
+                    Add
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="cartList" style={{ marginTop: 10 }}>
-              {cart.map((item) => {
-                const p = findProduct(productsList, item.sku);
+            <div className="orderProductList">
+              {filtered.map((p) => {
+                const desc = (p.notes || "").trim();
                 return (
-                  <div key={item.sku} className="cartRow">
-                    <div className="cartName">
-                      {p ? p.name : item.sku} <span className="cartNameSmall">({item.sku})</span>
-                      {p?.size ? <div className="p" style={{ margin: "6px 0 0" }}>Size: {p.size}</div> : null}
-                      {p?.casePack ? <div className="p" style={{ margin: "0" }}>Case: {p.casePack}</div> : null}
-                      {p?.moq ? <div className="p" style={{ margin: "0" }}>MOQ: {p.moq}</div> : null}
-                    </div>
-
-                    <div className="cartQtyWrap">
-                      <span className="cartQtyLabel">Qty (cartons)</span>
-                      <input
-                        className="input cartQtyInput"
-                        value={item.qty}
-                        onChange={(e) => updateQty(item.sku, e.target.value)}
-                        inputMode="numeric"
-                      />
-                    </div>
-
-                    <button type="button" className="button" onClick={() => removeFromCart(item.sku)}>
-                      Remove
+                  <article key={p.sku} className="card productCard">
+                    <button
+                      type="button"
+                      className="productMedia"
+                      onClick={() => setActiveProduct(p)}
+                      aria-label={`View details for ${p.name}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img className="productImg" src={productImage(p)} alt={p.name} />
                     </button>
-                  </div>
+
+                    <div className="productInfo">
+                      <div className="metaRow">
+                        <span className="pill">{p.category}</span>
+                        {p.origin ? <span className="pill">Origin: {p.origin}</span> : null}
+                        <span className="pill">SKU: {p.sku}</span>
+                      </div>
+                      <div>
+                        <h2 className="productTitle">{p.name}</h2>
+                        {desc ? (
+                          <button type="button" className="productDesc" onClick={() => setActiveProduct(p)}>
+                            {desc}
+                          </button>
+                        ) : null}
+                      </div>
+                      <div className="orderAddRow">
+                        <label className="fieldLabel" style={{ maxWidth: 140 }}>
+                          Qty cartons
+                          <input
+                            className="textInput"
+                            inputMode="numeric"
+                            value={qtyBySku[p.sku] ?? "1"}
+                            onChange={(e) => setQtyBySku((prev) => ({ ...prev, [p.sku]: e.target.value }))}
+                          />
+                        </label>
+                        <button className="button" type="button" onClick={() => addToCart(p.sku, qtyBySku[p.sku] ?? "1")}>
+                          Add to Request
+                        </button>
+                      </div>
+                    </div>
+                  </article>
                 );
               })}
             </div>
-          </div>
-        )}
-
-        <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
-          {filtered.map((p) => {
-            const desc = (((p as any).description ?? p.notes ?? "") as string).trim();
-            const imgSrc = toProductImageSrc((p as any).imageUrl ?? (p as any).image_url);
-            return (
-              <div key={p.sku} className="card productCard">
-                <button
-                  type="button"
-                  className="productMedia"
-                  onClick={() => setActiveProduct(p)}
-                  aria-label={`View details for ${p.name}`}
-                >
-                  <img className="productImg" src={imgSrc} alt={p.name} />
-                </button>
-
-                <div className="productInfo">
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                    <span className="pill">{p.category}</span>
-                  </div>
-
-                  <div style={{ marginTop: 6 }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: "var(--rhg-dark)" }}>{p.name}</div>
-                    {desc ? (
-                      <button type="button" className="productDesc" onClick={() => setActiveProduct(p)}>
-                        {desc}
-                      </button>
-                    ) : null}
-                  </div>
-
-                  <div className="orderAddRow">
-                    <div style={{ fontWeight: 700, color: "var(--rhg-dark)", whiteSpace: "nowrap" }}>Qty (cartons)</div>
-                    <input
-                      className="textInput"
-                      inputMode="numeric"
-                      value={qtyBySku[p.sku] ?? "1"}
-                      onChange={(e) => setQtyBySku((prev) => ({ ...prev, [p.sku]: e.target.value }))}
-                      style={{ maxWidth: 140 }}
-                    />
-                    <button
-                      className="button"
-                      type="button"
-                      onClick={() => addToCart(p.sku, qtyBySku[p.sku] ?? "1")}
-                    >
-                      Add to Order
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          {filtered.length === 0 ? (
-            <div className="card" style={{ padding: 14, color: "var(--rhg-muted)" }}>
-              No products match your search.
-            </div>
-          ) : null}
+          </Section>
         </div>
-      </Section>
 
-      <Section title="Submit Order Request" subtitle="Send your order request by email. You can also download a PDF copy.">
-        <form
-          onSubmit={(e) => submit(e, true)}
-          style={{
-            background: "rgba(255,255,255,0.7)",
-            border: "1px solid rgba(9, 80, 33, 0.18)",
-            borderRadius: 18,
-            padding: 14,
-          }}
-        >
-          <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-            <div>
-              <div className="p" style={{ margin: "0 0 6px" }}>
-                Your name
+        <aside className="orderSummary">
+          <div className="card">
+            <div className="cartTotals">
+              <span>Request summary</span>
+              <span>{cartonTotal} cartons</span>
+            </div>
+
+            {cart.length === 0 ? (
+              <p className="muted">Your selected products will appear here.</p>
+            ) : (
+              <div className="cartList" style={{ marginTop: 10 }}>
+                {cart.map((item) => {
+                  const p = findProduct(products, item.sku);
+                  return (
+                    <div key={item.sku} className="cartRow">
+                      <div className="cartName">
+                        {p ? p.name : item.sku}
+                        <div className="cartNameSmall">{item.sku}</div>
+                      </div>
+                      <label className="cartQtyWrap">
+                        <span className="cartQtyLabel">Cartons</span>
+                        <input
+                          className="input"
+                          value={item.qty}
+                          onChange={(e) => updateQty(item.sku, e.target.value)}
+                          inputMode="numeric"
+                        />
+                      </label>
+                      <button type="button" className="button secondary" onClick={() => removeFromCart(item.sku)}>
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
+            )}
+          </div>
+
+          <form className="card formStack" onSubmit={(e) => submit(e, true)}>
+            <h2 className="cardTitle">Submit request</h2>
+            <label className="fieldLabel">
+              Your name
               <input className="input" value={name} onChange={(e) => setName(e.target.value)} required />
-            </div>
-            <div>
-              <div className="p" style={{ margin: "0 0 6px" }}>
-                Company
-              </div>
+            </label>
+            <label className="fieldLabel">
+              Company
               <input className="input" value={company} onChange={(e) => setCompany(e.target.value)} />
-            </div>
-            <div>
-              <div className="p" style={{ margin: "0 0 6px" }}>
-                Phone
-              </div>
+            </label>
+            <label className="fieldLabel">
+              Phone
               <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-            </div>
-            <div>
-              <div className="p" style={{ margin: "0 0 6px" }}>
-                Email (optional)
-              </div>
-              <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </div>
-          </div>
+            </label>
+            <label className="fieldLabel">
+              Email
+              <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </label>
+            <label className="fieldLabel">
+              Notes
+              <textarea className="textarea" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </label>
 
-          <div style={{ marginTop: 12 }}>
-            <div className="p" style={{ margin: "0 0 6px" }}>
-              Notes (optional)
+            <div className="formActions">
+              <button type="button" className="button secondary" onClick={downloadPdf} disabled={cart.length === 0}>
+                Download PDF
+              </button>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={(e) => submit(e as unknown as React.FormEvent, false)}
+                disabled={status === "sending" || cart.length === 0}
+              >
+                Email Only
+              </button>
+              <button type="submit" className="button" disabled={status === "sending" || cart.length === 0}>
+                Send with PDF
+              </button>
             </div>
-            <textarea className="textarea" value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </div>
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14, alignItems: "center" }}>
-            <button type="button" className="button" onClick={downloadPdf} disabled={cart.length === 0}>
-              Download PDF
-            </button>
-            <button
-              type="button"
-              className="button"
-              onClick={(e) => submit(e as any, false)}
-              disabled={status === "sending" || cart.length === 0}
-            >
-              Submit (email only)
-            </button>
-            <button type="submit" className="button" disabled={status === "sending" || cart.length === 0}>
-              Submit (PDF attached)
-            </button>
-            {status === "sent" ? <span className="p" style={{ margin: 0 }}>Sent! We will respond soon.</span> : null}
-            {status === "error" ? <span className="p" style={{ margin: 0 }}>Error sending. Please try again or email us.</span> : null}
-          </div>
-        </form>
-      </Section>
+            {status === "sent" ? <p className="muted">Sent. We will respond soon.</p> : null}
+            {status === "error" ? <p className="muted">Add at least one product, then try again.</p> : null}
+          </form>
+        </aside>
+      </div>
 
       {activeProduct ? (
         <div className="modalOverlay" onClick={() => setActiveProduct(null)}>
@@ -504,56 +446,29 @@ const filtered = useMemo(() => {
             <div className="modalHeader">
               <div>
                 <div className="modalTitle">{activeProduct.name}</div>
-                <div className="modalSubtitle">{activeProduct.category}{activeProduct.origin ? ` • ${activeProduct.origin}` : ""}</div>
+                <div className="modalSubtitle">
+                  {activeProduct.category}
+                  {activeProduct.origin ? ` | ${activeProduct.origin}` : ""}
+                </div>
               </div>
               <button type="button" className="modalClose" onClick={() => setActiveProduct(null)} aria-label="Close">
-                ✕
+                X
               </button>
             </div>
             <div className="modalBody">
               <div className="modalMedia">
-                <img
-                  src={toProductImageSrc(activeImage || activeProduct.image_url || (activeProduct as any).image)}
-                  alt={activeProduct.name}
-                  className="modalImg"
-                />
-                {(() => {
-                  const main = (activeProduct.image_url || (activeProduct as any).image || "").toString();
-                  const extras = Array.isArray(activeProduct.images) ? activeProduct.images : [];
-                  const all = [main, ...extras].filter(Boolean);
-                  if (all.length <= 1) return null;
-                  return (
-                    <div className="thumbRow" role="list" aria-label="More product images">
-                      {all.map((src, i) => {
-                        const u = toProductImageSrc(src);
-                        const isActive = src === activeImage;
-                        return (
-                          <button
-                            key={`${src}-${i}`}
-                            type="button"
-                            className={isActive ? "thumbBtn thumbActive" : "thumbBtn"}
-                            onClick={() => setActiveImage(src)}
-                            aria-label={`View image ${i + 1}`}
-                          >
-                            <img src={u} alt={`${activeProduct.name} image ${i + 1}`} className="thumbImg" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={productImage(activeProduct)} alt={activeProduct.name} className="modalImg" />
               </div>
               <div className="modalInfo">
                 <div className="modalFacts">
-                  {activeProduct.sku ? <div><b>SKU:</b> {activeProduct.sku}</div> : null}
+                  <div><b>SKU:</b> {activeProduct.sku}</div>
                   {activeProduct.brand ? <div><b>Brand:</b> {activeProduct.brand}</div> : null}
                   {activeProduct.size ? <div><b>Size:</b> {activeProduct.size}</div> : null}
-                  {(activeProduct.casePack) ? <div><b>Case:</b> {activeProduct.casePack}</div> : null}
+                  {activeProduct.casePack ? <div><b>Case pack:</b> {activeProduct.casePack}</div> : null}
                   {activeProduct.moq ? <div><b>MOQ:</b> {activeProduct.moq}</div> : null}
                 </div>
-                {(activeProduct.notes) ? (
-                  <div className="modalDesc">{activeProduct.notes}</div>
-                ) : null}
+                {activeProduct.notes ? <div className="modalDesc">{activeProduct.notes}</div> : null}
               </div>
             </div>
           </div>

@@ -39,7 +39,6 @@ function emptyDraft(): Omit<ProductRow, "id"> {
 }
 
 export default function AdminProductsPage() {
-  const supabase = getSupabaseBrowserClient();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string>("");
   const [rows, setRows] = useState<ProductRow[]>([]);
@@ -52,6 +51,12 @@ export default function AdminProductsPage() {
   const isEditing = Boolean(editingId);
 
   async function getAccessToken(): Promise<string | null> {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) {
+      setStatus("error");
+      setError("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+      return null;
+    }
     const { data } = await supabase.auth.getSession();
     return data.session?.access_token ?? null;
   }
@@ -155,7 +160,8 @@ export default function AdminProductsPage() {
 
   async function toggleAvailable(r: ProductRow) {
     try {
-      await api("PUT", { id: r.id, available: !r.available, sku: r.sku, name: r.name, category: r.category });
+      const { id, ...rest } = r;
+      await api("PUT", { id, ...rest, available: !r.available });
       await load();
     } catch (e: any) {
       alert(e?.message || "Update failed");
@@ -164,7 +170,7 @@ export default function AdminProductsPage() {
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
-      <Section title="Admin — Products">
+      <Section title="Admin - Products">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             <input
@@ -197,7 +203,7 @@ export default function AdminProductsPage() {
           </div>
         </div>
 
-        {status === "loading" ? <p style={{ marginTop: 12 }}>Loading…</p> : null}
+        {status === "loading" ? <p style={{ marginTop: 12 }}>Loading...</p> : null}
         {status === "error" ? <p style={{ marginTop: 12, color: "crimson" }}>{error}</p> : null}
 
         {status === "ready" ? (
@@ -252,7 +258,7 @@ export default function AdminProductsPage() {
                 <div className="modalSub">Fields are stored in Supabase public.products</div>
               </div>
               <button type="button" className="modalClose" onClick={() => setShowEditor(false)} aria-label="Close">
-                ×
+                X
               </button>
             </div>
 

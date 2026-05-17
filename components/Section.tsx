@@ -10,14 +10,14 @@ export default function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section style={{ margin: "40px 0" }}>
-      <div style={{ marginBottom: 16 }}>
-        <h2 style={{ margin: 0, fontSize: 28, lineHeight: 1.2 }}>{title}</h2>
-        {subtitle ? (
-          <p style={{ margin: "10px 0 0", opacity: 0.85, maxWidth: 760 }}>
-            {subtitle}
-          </p>
-        ) : null}
+    <section className="section">
+      <div className="sectionHead">
+        <div>
+          <h2 className="sectionTitle">{title}</h2>
+          {subtitle ? (
+            <p className="sectionSubtitle">{subtitle}</p>
+          ) : null}
+        </div>
       </div>
       {children}
     </section>
